@@ -1,0 +1,65 @@
+---
+title: "softImpute"
+author: "Jakub Kosterna, Dawid Przybyliński, Hanna Zdulska"
+date: "25 marca 2020"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1. Wprowadzenie
+
+## 1.1. Geneza
+
+Ten genialny pakiet to doskonałe narzędzie do uzupełnienia macierzy liczbami przy użyciu **nuclear norm regularization**, znanej także jako **trace norm regularization** (pl: *regularyzacja norm śladowych*). Biblioteka implementuje funkcję *softImpute()* z dwoma przydatnymi algorytmami:
+
+1. Iteracyjne obliczenie soft-thresholded SVD z wypełnionej macierzy (opcja *type="svd"*)
+
+2. Uzupełnianie braków ramki szacunkami korzystając z alternating ridge regression (opcja *type="als"*)
+
+Zaletą pakietu jest fakt, że może obsługiwać zarówno małe, jak i bardzo duże macierze. 
+
+## 1.2. Norma śladowa - przypomnienie
+
+No dobra, ale czym właściwie była ta *trace norm*?
+
+Jest to suma wartości bezwzględnych wartości własnych macierzy,
+
+$||A||_{1} = trace((\sqrt{(X^{*}X)}))$
+
+# 2. Działanie
+
+## 2.1. Odczyt
+
+```{r odczyt, message = FALSE, warning = FALSE}
+# install.packages("softImpute") # if not installed
+library(softImpute)
+```
+
+## 2.2. Przykład
+
+Wygenerujmy losową macierz 5 x 6 i usuńmy losowe 7 wartości.
+
+```{r przyklad1_1}
+set.seed(123)
+
+X = matrix(rnorm(30), 5, 6)
+X
+X_del = X
+X_del[sample(1:30, 7, replace = FALSE)] = NA
+X_del
+```
+
+Zobaczmy wynik działania *soft_impute()*. W tym celu utworzymy zmienną *fits* generującą dopasowanie w zależności od macierzy z usuniętymi wartościami, a następnie wypełnimy ją z pomocą funkcji *complete()*.
+
+```{r przyklad1_2}
+fits = softImpute(X_del, trace = TRUE, type="svd")
+complete(X_del, fits)
+```
+
+Jak widać funkcja poradziła sobie całkiem dobrze w przypadku losowo wygenerowanych wartości z rozkładu normalnego.
