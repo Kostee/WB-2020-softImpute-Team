@@ -34,13 +34,13 @@ SoftImpute to nieduży i przydatny pakiet do uzupełniania macierzy, stworzoną 
 
 Pakiet z założenia służy do uzupełniania macierzy, wymaga on nas konwersji z data.frame na klasę matrix. Operuje tylko na macierzach, co jest równocześnie zaletą - potrzebuje tylko pakiet Matrix:
 ```{r}
-#require(deepdep)
-#plot_dependencies(deepdep("Amelia", depth = 2))
-#plot_dependencies(deepdep("missMDA", depth = 2))
-#plot_dependencies(deepdep("missForest", depth = 2))
-#plot_dependencies(deepdep("VIM", depth = 2))
-#plot_dependencies(deepdep("mice", depth = 2))
-#plot_dependencies(deepdep("softImpute", depth = 2))
+require(deepdep)
+plot_dependencies(deepdep("Amelia", depth = 2))
+plot_dependencies(deepdep("missMDA", depth = 2))
+plot_dependencies(deepdep("missForest", depth = 2))
+plot_dependencies(deepdep("VIM", depth = 2))
+plot_dependencies(deepdep("mice", depth = 2))
+plot_dependencies(deepdep("softImpute", depth = 2))
 ```
 
 
@@ -50,18 +50,18 @@ Zaletą pakietu jest fakt, że może obsługiwać zarówno małe, jak i bardzo d
 Niech $X$  będzie dużą $m\times n$ macierzą z wiloma brakującymi wartościami. Niech $\Omega$ zawiera pary indeksów $(i,j)$ gdzie $X$ był zaobserwowany, i niech $P_\Omega(X)$ oznacza macierz tylko z  punktami z $\Omega$, a w pozostałych miejscach ma wartości 0. Zatem jeśli $X$ ma brakujące wartości w $\Omega^\perp$, $P_\Omega(X)$ by oznaczyło NA jako 0. 
  
 Rozważmy wyrażenie
- $$\min_M\frac12\|P_\Omega(X)-P_\Omega(M)\|^2_F+\lambda\|M\|_*,$$
- gdzie $\|M\|_*$ to suma wartości singularnych macierzy $M$ (nucelar norm, trace norm).
+$$\min_M\frac12\|P_\Omega(X)-P_\Omega(M)\|^2_F+\lambda\|M\|_*,$$
+gdzie $\|M\|_*$ to suma wartości singularnych macierzy $M$ (nucelar norm, trace norm).
  
- Jeśli $\widehat M$ jest rozwiązaniem plroblemu, to musi spełniać następujący warunek:
- $$ {\widehat M}=S_\lambda(Z)$$ 
- Gdzie $$Z=P_\Omega(X)+P_{\Omega^\perp}(\widehat M).$$
- Operator $S_\lambda(Z)$ dla macierzy $Z$ wykonuje następujące instrukcje:
+Jeśli $\widehat M$ jest rozwiązaniem plroblemu, to musi spełniać następujący warunek:
+$$ {\widehat M}=S_\lambda(Z)$$ 
+Gdzie $$Z=P_\Omega(X)+P_{\Omega^\perp}(\widehat M).$$
+Operator $S_\lambda(Z)$ dla macierzy $Z$ wykonuje następujące instrukcje:
  
- 1. Znajduje rozkład SVD dla $Z=UDV^T$, oraz $d_i$ - wartości singularne $D$.
- 2. Zaszumia wartości singularne: $d_i^*= (d_i-\lambda)_+$.
- 3. Tworzy nową macierz $Z$: $S_\lambda(Z)=UD^*V^T$.
- Dla dostaecznie dużych wartości $\lambda$, $D^*$ will be rank-reduced, and hence so will be $UD^*V^T$.
+1. Znajduje rozkład SVD dla $Z=UDV^T$, oraz $d_i$ - wartości singularne $D$.
+2. Zaszumia wartości singularne: $d_i^*= (d_i-\lambda)_+$.
+3. Tworzy nową macierz $Z$: $S_\lambda(Z)=UD^*V^T$.
+Dla dostaecznie dużych wartości $\lambda$, $D^*$ będzie miało mniejszy rząd, więc rózwnież $UD^*V^T$.
 
 
 ## Rozkład SVD
@@ -74,6 +74,7 @@ gdzie:
 $U, V$ - macierze ortogolnalne
 
 $S$ - macierz diagonalna złożona z wartości singularnych $A$ 
+
 # Działanie
 
 ## Odczyt
