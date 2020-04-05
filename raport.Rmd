@@ -18,7 +18,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Geneza i zawartość
 
-SoftImpute to nieduży i przydatny pakiet do uzupełniania macierzy, stworzoną przez Trevor Hastiego(Stanford, autor wielu książek o statystce). Wykorzystuje do tego **nuclear norm regularization**, znanej także jako **trace norm regularization** (pl: *regularyzacja norm śladowych*). Biblioteka implementuje: 
+SoftImpute to nieduży i przydatny pakiet do uzupełniania macierzy, stworzony przez Trevor Hastiego (Stanford, autor wielu książek o statystce). Wykorzystuje do tego **nuclear norm regularization**, znanej także jako **trace norm regularization** (pl: *regularyzacja norm śladowych*). Biblioteka implementuje: 
 
   * funkcję *softImpute()* z dwoma przydatnymi algorytmami:
 
@@ -26,14 +26,14 @@ SoftImpute to nieduży i przydatny pakiet do uzupełniania macierzy, stworzoną 
 
     2. Uzupełnianie braków ramki szacunkami korzystając z alternating ridge regression(zwane popularniej w Europie Tikhonov regularization) (opcja *type="als"*)
     
-  * biscale() - zoptymalizowane scale() działające również na niekompletnej macierzy, działające też szybko na bardzo dużych macierzach
+  * *biscale()* - zoptymalizowane scale() działające również na niekompletnej macierzy, działające też szybko na bardzo dużych macierzach
   
-  * dwie nowe klasy dla macierzy: SparseplusLowRank i Incomplete
+  * dwie nowe klasy dla macierzy: *SparseplusLowRank* i *Incomplete*
   
 ## Zalety i wady
 
 Pakiet z założenia służy do uzupełniania macierzy, wymaga on nas konwersji z data.frame na klasę matrix. Operuje tylko na macierzach, co jest równocześnie zaletą - potrzebuje tylko pakiet Matrix:
-```{r}
+```{r, warning = FALSE}
 require(deepdep)
 plot_dependencies(deepdep("Amelia", depth = 2))
 plot_dependencies(deepdep("missMDA", depth = 2))
@@ -91,28 +91,83 @@ $D$ - macierz diagonalna złożona z wartości singularnych $A$
 library(softImpute)
 ```
 
-## Przykład
+## Przykłady
 
-Wygenerujmy losową macierz 5 x 6 i usuńmy losowe 7 wartości.
+Wpierw w celu obycia ze składnią przetestujmy wpierw naszą podstawową funkcję na losowej macierzy 5 x 6 z wartościami z rozkładu normalnego i usuńmy z niej losowe 7 wartości.
 
 ```{r przyklad1_1}
-set.seed(123)
+set.seed(17)
 
 X = matrix(rnorm(30), 5, 6)
-X
 X_del = X
 X_del[sample(1:30, 7, replace = FALSE)] = NA
 X_del
 ```
 
-Zobaczmy wynik działania *soft_impute()*. W tym celu utworzymy zmienną *fits* generującą dopasowanie w zależności od macierzy z usuniętymi wartościami, a następnie wypełnimy ją z pomocą funkcji *complete()*.
+Utworzymy zmienną *fits* generującą dopasowanie w zależności od macierzy z usuniętymi wartościami, a następnie wypełnimy ją z pomocą funkcji *complete()*.
 
 ```{r przyklad1_2}
-fits = softImpute(X_del, trace = TRUE, type="svd")
-complete(X_del, fits)
+fits <- softImpute(X_del, trace = TRUE, type="svd")
+completed <- complete(X_del, fits)
 ```
 
-Jak widać funkcja poradziła sobie całkiem dobrze w przypadku losowo wygenerowanych wartości z rozkładu normalnego.
+Zobaczmy macierz wejściową, wypełnioną, ich różnicę i miarę rmse.
+
+```{r przyklad1_3}
+X
+completed
+X - completed
+# install.packages("Metrics") # if not installed
+library(Metrics)
+rmse(X, completed)
+```
+
+W kolejnych krokach będziemy rozpatrywać macierz wygenerowaną w bardziej złożony sposób zawierającą już pewne nie-zupełnie-losowe własności matematyczne. Wpierw przygotujmy ją i usuńmy 30% wartości.
+
+```{r przyklad2_1}
+set.seed(101)
+n <- 200
+p <- 100
+J <- 50
+np <- n * p
+missfrac <- 0.3
+
+x <- matrix(rnorm(n*J), n, J) %*% matrix(rnorm(J*p), J, p) + matrix(rnorm(np), n, p) / 5
+sample(x, 20)
+
+ix <- seq(np)
+imiss <- sample(ix, np*missfrac, replace=FALSE)
+xna <- x
+xna[imiss] = NA
+```
+
+Metoda "klasyczna"
+
+```{r przyklad2_2}
+### uses regular matrix method for matrices with NAs
+fit1 <- softImpute(xna, rank = 50, lambda = 30)
+```
+
+```{r przyklad2_3}
+### uses sparse matrix method for matrices of class "Incomplete"
+xnaC <- as(xna, "Incomplete")
+fit2 <- softImpute(xnaC, rank=50, lambda=30)
+```
+
+```{r przyklad2_4}
+### uses "svd" algorithm
+fit3 <- softImpute(xnaC, rank=50, lambda=30, type="svd")
+ximp <- complete(xna,fit1)
+```
+
+```{r przyklad2_5}
+### first scale xna
+xnas <- biScale(xna)
+fit4 <- softImpute(xnas,rank=50,lambda=10)
+ximp <- complete(xna,fit4)
+impute(fit4, i = c(1, 3, 7), j = c(2, 5, 10))
+impute(fit4, i = c(1, 3, 7), j = c(2, 5, 10), unscale=FALSE) #ignore scaling and centering
+```
 
 # Bibliografia - poczytaj wiecej
  * [Mazumder et al (2010)](http://web.stanford.edu/~hastie/Papers/mazumder10a.pdf)
