@@ -48,37 +48,36 @@ Zaletą pakietu jest fakt, że może obsługiwać zarówno małe, jak i bardzo d
 # Jak działa algorytm? 
 
 ## Soft-thresholded SVD
-
-Niech $X$  będzie dużą $m\times n$ macierzą z wiloma brakującymi wartościami. Niech $\Omega$ zawiera pary indeksów $(i,j)$ gdzie $X$ był zaobserwowany, i niech $P_\Omega(X)$ oznacza macierz z wartościami jak w $X$ w punktach z $\Omega$, a w pozostałych ma wartości 0. Zatem jeśli $X$ ma brakujące wartości w $\Omega^\perp$, $P_\Omega(X)$ by oznaczyło NA jako 0. 
+Niech $X$  będzie dużą macierzą $m\times n$ z wieloma brakującymi wartościami. Niech $\Omega$ zawiera pary indeksów $(i,j)$ gdzie $X$ był zaobserwowany, i niech $P_\Omega(X)$ oznacza macierz z wartościami jak w $X$ w punktach z $\Omega$, a w pozostałych ma wartości 0. Zatem jeśli $X$ ma brakujące wartości w $\Omega^\perp$, $P_\Omega(X)$ oznaczyłoby NA jako 0. 
  
 Rozważmy wyrażenie
-$$\min_M\frac12\|P_\Omega(X)-M\|^2_F+\lambda\|M\|_*,$$
-gdzie $\|M\|_*$ to suma wartości singularnych macierzy $M$ (nucelar norm, trace norm), natomiast $\lambda$ jest parametrem.
+$$\min_M\frac12\|P_\Omega(X)-P_\Omega(M)\|^2_F+\lambda\|M\|_*,$$
+gdzie $\|M\|_*$ to norma śladowa - suma wartości singularnych (osobliwych) macierzy $M$ (nucelar norm, trace norm), natomiast $\lambda$ jest parametrem.
 
-Niech $\widehat M$ będzie przybliżeniem rozwiązania problemu:
+Niech $\widehat M$ będzie przybliżonym rozwiązaniem problemu. Definiujemy:
 $$Z=P_\Omega(X)+P_{\Omega^\perp}(\widehat M).$$
 
 $${\widehat M}=S_\lambda(Z)$$ 
 
 Operator $S_\lambda(Z)$ dla macierzy $Z$ wykonuje następujące instrukcje:
 
-1. Znajduje rozkład SVD dla $Z=UDV$, oraz $d_i$ - wartości singularne $Z$.
+1. Znajduje rozkład SVD dla $Z=U\Sigma V^T$, oraz $d_i$ - wartości singularne $Z$.
 2. Zaszumia wartości singularne: $d_i^*= (d_i-\lambda)_+$.
-3. Tworzy nową macierz $Z$: $S_\lambda(Z)=UD^*V$.
-Dla dostaecznie dużych wartości $\lambda$, $D^*$ będzie miało zmniejszony rząd, więc również i $UD^*V$.
+3. Tworzy nową macierz $Z$: $S_\lambda(Z)=U\Sigma ^*V^T$.
+Dla dostatecznie dużych wartości $\lambda$, $\Sigma ^*$ będzie miała zmniejszony rząd, więc również i $U\Sigma ^*V^T$.
 
-Stąd tworząc kolejne macierze ${\widehat M}$, dostajemy algorytm iteracyjny. 
+Stąd tworząc kolejne macierze ${\widehat M}$ i $Z$, dostajemy algorytm iteracyjny. 
 
 ## Rozkład SVD
 
 Każdą macierz A można przedstawić jako:
 
-$$ A = UDV $$
+$$ A = U\Sigma V^T $$
 gdzie: 
 
-$U, V$ - macierze ortogolnalne
+$U, V$ - macierze ortogonalne
 
-$D$ - macierz diagonalna złożona z wartości singularnych $A$ 
+$\Sigma$ - macierz diagonalna złożona z wartości singularnych $A$ 
 
 # Działanie
 
