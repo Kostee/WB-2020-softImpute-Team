@@ -91,6 +91,14 @@ library(softImpute)
 
 ## Przykłady
 
+UWAGA! Tylko wartości numeryczne.
+
+```{r przyklad0, eval = FALSE}
+softImpute(matrix(c('a', 'b', 'a', NA, 'c', 'b'), 2, 3))
+```
+
+Wywołanie powyższej linii kodu zwróciłoby błąd.
+
 ### Ogląd na prostej macierzy
 
 Wpierw w celu obycia ze składnią przetestujmy wpierw naszą podstawową funkcję na losowej macierzy 5 x 6 z wartościami z rozkładu normalnego i usuńmy z niej losowe 7 wartości.
@@ -143,9 +151,23 @@ xna <- x
 xna[imiss] = NA
 ```
 
-Metoda "klasyczna"
+Przygotujemy także dwie maierze pomocnicze - *xMeans* i *xZeros* odpowiadające za matryce uzupełnione odpowiedni średnimi i zerami. Porównanie miar rezultatu *softImpute()* i owych dwóch da nam dobry ogląd jakości naszej funkcji.
 
 ```{r przyklad2_2}
+xZeros <- xna
+xZeros[is.na(xZeros)] <- 0
+sample(xZeros, 10)
+
+Xmean <- mean(xZeros) * 10 / 7
+print(Xmean)
+xMeans <- xna
+xMeans[is.na(xMeans)] <- Xmean
+sample(xMeans, 10)
+```
+
+Metoda "klasyczna"
+
+```{r przyklad2_3}
 ### uses regular matrix method for matrices with NAs
 fit1 <- softImpute(xna, rank = 50, lambda = 30)
 ```
@@ -162,9 +184,9 @@ W efekcie otrzymujemy 3 macierze:
 
 * $U$ i $V$ – macierze ortogonalne (czyli ${\displaystyle U^{-1}=U^{T},}{\displaystyle U^{-1}=U^{T},} {\displaystyle V^{-1}=V^{T}}V^{-1}=V^T)$
 
-* $\Sigma$  – macierz diagonalna (przekątniowa), taka że ${\displaystyle \Sigma =\operatorname {diag} (\sigma _{i}),}{\displaystyle \Sigma =\operatorname {diag} (\sigma _{i}),}$ gdzie$ {\displaystyle \sigma _{i}}\sigma _{i}$ – nieujemne wartości szczególne (osobliwe) macierzy ${\displaystyle A,}A$, zwyczajowo uporządkowane nierosnąco.
+* $\Sigma$  – macierz diagonalna (przekątniowa), taka że ${\displaystyle \Sigma =\operatorname {diag} (\sigma _{i}),}{\displaystyle \Sigma =\operatorname {diag} (\sigma _{i}),}$ gdzie ${\displaystyle \sigma _{i}}\sigma _{i}$ – nieujemne wartości szczególne (osobliwe) macierzy ${\displaystyle A,}A$, zwyczajowo uporządkowane nierosnąco.
 
-```{r przyklad2_3, echo = FALSE}
+```{r przyklad2_4, echo = FALSE}
 print("Wymiary V:")
 print(dim(fit1$v))
 print("Wymiary U:")
@@ -173,22 +195,28 @@ print("Wartości macierzy diagonalnej:")
 print(fit1$d)
 ```
 
-Zobaczmy czy zaiste wygenerowane macierze spełniają warunek rozkładu SVD i średni błąd kwadratowy:
+Zobaczmy czy zaiste wygenerowane macierze spełniają warunek rozkładu SVD i średni błąd kwadratowy macierzy wejściowej i wygenerowanej przez *softImpute()*:
 
-```{r przyklad2_4}
+```{r przyklad2_5}
 result <- (fit1$u * fit1$d) %*% t(fit1$v)
 rmse(result, x)
+rmsM <- rmse(x, xMeans)
+rmsM
+rms0 <- rmse(x, xZeros)
+rms0
 ```
+
+W porównaniu do macierzy wejściowej uzupełnionej zerami i średnimi tak średnio bym powiedział. Ale w końcu robotę robi funkcja *complete()* - która uzupełnia braki macierzy wejściowej tymi z tej specjalnie generowanej. Oczywiście im mniejszy błąd - tym lepszy będzie rezultat. Ale czy aż dla 30% funkcja ogarnie coś sensownego?
 
 Satysfakcjonująco! A jak poradzi sobie funkcja *complete()*?
 
-```{r przyklad2_5}
+```{r przyklad2_6}
 completed <- complete(xna, fit1)
 rms1 <- rmse(x, completed)
 rms1
 ```
 
-30% brakujących wartości zostało uzupełnionych i wynik wyszedł jeszcze lepszy.
+Jak widać jak najbardziej! 30% brakujących wartości zostało uzupełnionych i wynik wyszedł zdecydowanie lepszy niż dla uzupełniania zerami czy średnimi.
 
 ### Dla klasy *Incomplete*
 
@@ -237,6 +265,18 @@ Całkiem ładny wynik. Zobaczmy jeszcze *softImpute()* z użyciem *biScale()*.
 ```{r przyklad5_1}
 ### first scale xna
 xnas <- biScale(xna)
+```
+
+Czy faktycznie nasza macierz została poprawnie przeskalowana?
+
+```{r przyklad5_2}
+mean(xnas[!is.na(xnas)])
+var(xnas[!is.na(xnas)])
+```
+
+Wszystko jest w porządku! Średnia wyszła niemalże 0, a wariancja - niemalże 1. Otrzymaliśmy więc poprawne przeskalowanie.
+
+```{r przyklad5_3}
 fit4 <- softImpute(xnas, rank=50, lambda=10)
 completed <- complete(xna, fit4)
 rms4 <- rmse(x, completed)
@@ -262,7 +302,13 @@ Na dobry koniec porównajmy jeszcze miary błędów średniokwadratowych dla zap
 summary <- data.frame(rms1, rms2, rms3, rms4)
 colnames(summary) <- c("regular", "macierze rzadkie + incomplete", "svd", "z bi-skalowaniem")
 summary
+
+zerosMeans <- data.frame(rms0, rmsM)
+colnames(zerosMeans) <- c("zeros", "means")
+zerosMeans
 ```
+
+Sukces!
 
 # Bibliografia - poczytaj wiecej
  * [Mazumder et al (2010)](http://web.stanford.edu/~hastie/Papers/mazumder10a.pdf)
