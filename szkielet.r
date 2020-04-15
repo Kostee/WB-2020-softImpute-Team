@@ -1,3 +1,8 @@
+set.seed(123)
+
+# example dataset
+data = read.csv("irish.csv")
+
 read_dataset <- function(openml_id, dataset_dir){
   #ONETIME: dodac jako submodul repozytorium imputacji, żeby mieć w folderze /dependencies
   #sourcowanie odpowiedniego pliku
@@ -11,6 +16,14 @@ imputation_fun_mice <- function(df){
 }
 
 # i tutaj kolejne 4 funkcje, unless nie potrzebują specjalnego trakowania i można je załatwić elipsisem(...)
+
+# missForest
+library(missForest)
+
+imputation_missForest <- function(df){
+  return(missForest(df)$ximp)
+}
+
 
 # delete rows with missing values (można wpisać w ellipsis)
 imp_remove_rows <- function(df){
@@ -27,7 +40,7 @@ imp_mode_median <- function(df){
   
   for (i in 1L:length(df)){
     if (sum(is.na(df[,i])) > 0){
-      if (mode(df[,i]) == 'character'){
+      if (mode(df[,i]) == 'character' | is.factor(df[,i])){
         to_imp <- Mode(df[,i])
         df[,i][is.na(df[,i])] <- to_imp
       }
@@ -54,6 +67,9 @@ get_result <- function(dataset, imputation_fun, ...){
 
 #PARALLEL ROBI BRRRRR
 
-# example dataset
-options(stringsAsFactors = FALSE)
-data = read.csv("irish.csv")
+
+imputation_missForest(data)
+imp_remove_rows(data)
+imp_mode_median(data)
+
+
