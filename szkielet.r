@@ -4,15 +4,49 @@ library(mice)
 library(missForest)
 library(VIM)
 
-# example dataset
-data = read.csv("irish.csv")
+REPO_DATASET_DIR = './dependecies/datasets'
 
-read_dataset <- function(openml_id, dataset_dir){
-  #ONETIME: dodac jako submodul repozytorium imputacji, żeby mieć w folderze /dependencies
-  #sourcowanie odpowiedniego pliku
-  #obrobka przez wywołanie code.R albo jakoś tak
-  #return dataset
+#' Reads dataset based on id from directory
+#' @param openml_id int. Should be present in dataset_dir
+#' @param dataset_dir string with directory with subdirectories like 'openml_dataset_<openml_id>'
+#' @return dataset
+read_dataset <- function(openml_id, dataset_dir = REPO_DATASET_DIR){
+  
+  if (!dir.exists(dataset_dir)){
+    stop(paste(dataset_dir, 'does not exist' ))
+  }
+  
+  dir <- paste(dataset_dir, paste('openml_dataset', openml_id, sep = '_'), sep ='/')
+  if (!dir.exists(dir)){
+    stop(paste(dir, 'does not exist' ))
+  }
+  
+  start_dir <- getwd()
+  
+  #set right dir to code.R to acually work - it depends on dirlocation to create json
+  setwd(dir)
+  source('code.R')
+  setwd(start_dir)
+  return(dataset)
 }
+
+
+#' Reads all dataset from given directory
+#' @param dataset_dir string with directory with subdirectories like 'openml_dataset_<openml_id>'
+#' @return vector of datasets
+read_all_datasets <- function(dataset_dir){
+  
+  if (!dir.exists(dataset_dir)){
+    stop(paste(dataset_dir, 'does not exist'))
+  }
+  
+  start_dir <- getwd()
+  subdirs <- dir(dataset_dir)
+  ids <- sapply(subdirs, function(dir){substr(dir, 16, nchar(dir))})
+  datasets_combined <- sapply(ids, function(x){read_dataset(x, dataset_dir)})
+}
+
+
 
 imputation_fun_mice <- function(df){
   init <- mice(data, maxit=0) 
