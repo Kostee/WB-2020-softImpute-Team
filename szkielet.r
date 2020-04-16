@@ -4,13 +4,13 @@ library(mice)
 library(missForest)
 library(VIM)
 
-REPO_DATASET_DIR = './dependecies/datasets'
+DFT_REPO_DATASET_DIR = './dependencies/datasets'
 
 #' Reads dataset based on id from directory
 #' @param openml_id int. Should be present in dataset_dir
 #' @param dataset_dir string with directory with subdirectories like 'openml_dataset_<openml_id>'
 #' @return dataset
-read_dataset <- function(openml_id, dataset_dir = REPO_DATASET_DIR){
+read_dataset <- function(openml_id, dataset_dir = DFT_REPO_DATASET_DIR){
   
   if (!dir.exists(dataset_dir)){
     stop(paste(dataset_dir, 'does not exist' ))
@@ -25,16 +25,21 @@ read_dataset <- function(openml_id, dataset_dir = REPO_DATASET_DIR){
   
   #set right dir to code.R to acually work - it depends on dirlocation to create json
   setwd(dir)
-  source('code.R')
+  
+  # use new env to avoid trashing globalenv
+  surogate_env = new.env(parent = .BaseNamespaceEnv)
+  attach(surogate_env)
+  source("code.R",surogate_env)
+  
   setwd(start_dir)
-  return(dataset)
+  return(surogate_env$dataset)
 }
 
 
 #' Reads all dataset from given directory
 #' @param dataset_dir string with directory with subdirectories like 'openml_dataset_<openml_id>'
 #' @return vector of datasets
-read_all_datasets <- function(dataset_dir){
+read_all_datasets <- function(dataset_dir = DFT_REPO_DATASET_DIR){
   
   if (!dir.exists(dataset_dir)){
     stop(paste(dataset_dir, 'does not exist'))
@@ -44,6 +49,7 @@ read_all_datasets <- function(dataset_dir){
   subdirs <- dir(dataset_dir)
   ids <- sapply(subdirs, function(dir){substr(dir, 16, nchar(dir))})
   datasets_combined <- sapply(ids, function(x){read_dataset(x, dataset_dir)})
+  return(datasets_combined)
 }
 
 
