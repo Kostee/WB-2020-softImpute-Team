@@ -118,6 +118,10 @@ get_result <- function(dataset, imputation_fun, ...){
 #PARALLEL ROBI BRRRRR
 
 #IMPUTACJE ROBIĄ BRRRRR
+
+data_all <- read_all_datasets()
+data <- data_all[[1]]
+
 imputation_fun_mice(data)
 imputation_fun_vim(data)
 imputation_fun_missForest(data)
