@@ -1,5 +1,9 @@
 set.seed(123)
 
+library(mice)
+library(missForest)
+library(VIM)
+
 # example dataset
 data = read.csv("irish.csv")
 
@@ -11,27 +15,33 @@ read_dataset <- function(openml_id, dataset_dir){
 }
 
 imputation_fun_mice <- function(df){
-  #df_imp <- mice(cośtam, cośtam)
-  #return mice$result czy cokolwiek innego 
+  init <- mice(data, maxit=0) 
+  meth <- init$method
+  predM <- init$predictorMatrix
+  imputed <- mice(data, method=meth, predictorMatrix=predM, m=5)
+  completed <- complete(imputed)
+  return(completed)
 }
 
-# i tutaj kolejne 4 funkcje, unless nie potrzebują specjalnego trakowania i można je załatwić elipsisem(...)
+imputation_fun_vim <- function(df){
+  no_columns <- length(df)
+  imputed <- kNN(df)
+  imputed <- imputed[,1:no_columns]
+  return(imputed)
+}
 
-# missForest
-library(missForest)
 
-imputation_missForest <- function(df){
+imputation_fun_missForest <- function(df){
   return(missForest(df)$ximp)
 }
 
 
-# delete rows with missing values (można wpisać w ellipsis)
-imp_remove_rows <- function(df){
+imputation_remove_rows <- function(df){
   return (na.omit(df))
 }
 
 # impute median within numeric type columns and mode within character type ones 
-imp_mode_median <- function(df){
+imputation_mode_median <- function(df){
   
   Mode <- function(x) {
     ux <- unique(x)
@@ -55,7 +65,6 @@ imp_mode_median <- function(df){
 }
 
 
-
 get_result <- function(dataset, imputation_fun, ...){
   #zmierzyć czas teog ponizej
   imputated_dataset <- imputation_fun(dataset, ...)
@@ -65,11 +74,13 @@ get_result <- function(dataset, imputation_fun, ...){
   #return tabelka z miarami  + czas imputacji
 }
 
+
 #PARALLEL ROBI BRRRRR
 
-
-imputation_missForest(data)
-imp_remove_rows(data)
-imp_mode_median(data)
-
+#IMPUTACJE ROBIĄ BRRRRR
+imputation_fun_mice(data)
+imputation_fun_vim(data)
+imputation_fun_missForest(data)
+imputation_remove_rows(data)
+imputation_mode_median(data)
 
