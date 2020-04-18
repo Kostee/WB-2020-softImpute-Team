@@ -6,13 +6,17 @@ library(mice)
 library(missForest)
 library(VIM)
 
+# not needed directly, but have to be installed
+#library(jsonlite)
+
 DFT_REPO_DATASET_DIR = './dependencies/datasets'
 getwd()
 
 #' Reads dataset based on id from directory
 #' @param openml_id int. Should be present in dataset_dir
 #' @param dataset_dir string with directory with subdirectories like 'openml_dataset_<openml_id>'
-#' @return dataset
+#' @return list, where list$dataset contains processed data
+#' @seealso names(list)
 read_dataset <- function(openml_id, dataset_dir = DFT_REPO_DATASET_DIR){
   
   if (!dir.exists(dataset_dir)){
@@ -34,14 +38,30 @@ read_dataset <- function(openml_id, dataset_dir = DFT_REPO_DATASET_DIR){
   attach(surogate_env)
   source("code.R",surogate_env)
   
+  j <- jsonlite::read_json('./dataset.json')
+  j$dataset <- surogate_env$dataset
   setwd(start_dir)
-  return(surogate_env$dataset)
+  
+  return(j)
 }
 
 
 #' Reads all dataset from given directory
 #' @param dataset_dir string with directory with subdirectories like 'openml_dataset_<openml_id>'
-#' @return vector of datasets
+#' 
+#' @return matrix with columns = c(dataset, target_name)
+#' 
+#' @example 
+#' dfs <- read_all_datasets()
+#' df <- dfs[[1]]
+#' 
+#' target_name <- df$target
+#' cat('Target name: ', target_name)
+#' 
+#' n <- df$number_of_features_with_missings
+#' cat('Number of features with missing data: ', n)
+#' 
+#' @seealso names(list)
 read_all_datasets <- function(dataset_dir = DFT_REPO_DATASET_DIR){
   
   if (!dir.exists(dataset_dir)){
@@ -52,8 +72,11 @@ read_all_datasets <- function(dataset_dir = DFT_REPO_DATASET_DIR){
   subdirs <- dir(dataset_dir)
   ids <- sapply(subdirs, function(dir){substr(dir, 16, nchar(dir))})
   datasets_combined <- sapply(ids, function(x){read_dataset(x, dataset_dir)})
-  return(datasets_combined)
+  
+  datasets_combined <- t(datasets_combined)
+  return(unname(t(datasets_combined)))
 }
+
 
 # IMPUTATION FUNCTIONS
 
@@ -162,6 +185,7 @@ f1 <- function(confusion_matrix){
 
 
 library(rpart) # for classification tree
+
 get_result <- function(dataset, imputation_fun, name_of_target){
   start_time = Sys.time() # start to measure time
   
@@ -198,18 +222,18 @@ get_result <- function(dataset, imputation_fun, name_of_target){
 # example: get_result(data_all[[2]], imputation_fun_vim, "Utility")
 
 
-### WYWO£ANIE
+### WYWO?ANIE
 data_all <- read_all_datasets() # TODO: przynajmniej u Kuby problemy z datasetami 3,4,8
 # data <- data_all[[2]] <= example: getting second dataset
 
 #PARALLEL ROBI BRRRRR [TODO bo nie wiem jak]
 
-#IMPUTACJE ROBI¥ BRRRRR
+#IMPUTACJE ROBI? BRRRRR
 
 imputations <- list(imputation_fun_vim, imputation_fun_missForest,
                 imputation_remove_rows, imputation_mode_median, imputation_fun_mice)
 targets <- list("class", "Utility", NULL, NULL, "Class", "match", "job", NULL)
-# TODO: automatyzacja targetów, tak jak z read_datasets()
+# TODO: automatyzacja target?w, tak jak z read_datasets()
 
 for (imputation in imputations){
   for(i in 1:8){
