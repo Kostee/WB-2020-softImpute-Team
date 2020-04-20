@@ -182,7 +182,11 @@ f1 <- function(confusion_matrix){
 
 
 library(rpart) # for classification tree
-get_result <- function(dataset, imputation_fun, name_of_target){
+get_result <- function(dataset_list, imputation_fun){
+  
+  dataset <- dataset_list$dataset
+  name_of_target <- dataset_list$target
+  
   # imputation
   imputation_start = Sys.time() # start to measure time
   imputated_dataset <- imputation_fun(dataset) 
@@ -215,36 +219,68 @@ get_result <- function(dataset, imputation_fun, name_of_target){
   colnames(classification_report) <- c("accuracy", "precision",
                                        "recall", "f1")
   
-  return(list(confusion_matrix = confusion_matrix,
-                    classification_report = classification_report,
-                    imputation_time = imputation_stop - imputation_start,
-                    modelling_time = modelling_stop - modelling_start))
+  dataset_list$dataset <- NULL
+  # in future maybe return all dataset_list ?
+  # for now stick with readability
+  
+  imp_method_name <- as.character(substitute(imputation_fun))
+  
+  return(list( dataset_id = dataset_list$id, 
+               imp_method = imp_method_name,
+               confusion_matrix = confusion_matrix,
+               classification_report = classification_report,
+               imputation_time = imputation_stop - imputation_start,
+               modelling_time = modelling_stop - modelling_start))
 }
-# example: get_result(data_all[[2]]$dataset, imputation_fun_vim, data_all[[2]]$target)
+# example: get_result(data_all[[1]], imputation_remove_rows)
 # TODO: dokumentacja
+
+
 
 # reading datasets from OpenML's edits
 data_all <- read_all_datasets()
 
-
-#PARALLEL ROBI BRRRRR [TODO bo nie wiem jak]
-# ...
-# ...
-# ...
-
-
 # imputations and targets preparation
 imputations <- list(imputation_fun_vim, imputation_fun_missForest,
                     imputation_remove_rows, imputation_mode_median, imputation_fun_mice)
-targets <- list()
-for (i in 1:length(data_all)){
-  targets[[i]] <- data_all[[i]]$target
-}
+
+targets <- lapply(data_all, function(d){d$target})
+
+
+#PARALLEL ROBI BRRRRR [TODO bo nie wiem jak]
+library(batchtools)
+
+loadRegistry(file.dir = './registry', writeable = TRUE)
+
+# THIS WILL ERASE ALL PREVIOUS COMPUTATUONS
+# # clearRegistry()
+
+# this creates new registry
+# # registry <- makeRegistry(file.dir = "./registry", seed = 15390)
+
+makeClusterFunctionsMulticore()
+
+# careful to run once, should have 40 jobs in getJobTable()
+batchMap(fun = get_result, dataset = data_all, imputation_fun = rep(imputations, length(data_all)))
+getJobTable()
+
+# resources = list(walltime = 3600, memory = 1024)
+# see more at resources at ?submitJobs
+submitJobs()
+
+waitForJobs()
+
+
+# ...
+# ...
+
 
 # every imputation on each dataset
 for (imputation in imputations){
   for(i in 1:8){
-    results <- get_result(data_all[[i]]$dataset, imputation, targets[[i]])
+    results <- get_result(data_all[[i]], imputation)
+    print(results$id)
+    print(results$imp_method)
     print(results$confusion_matrix) # confusion_matrix
     print(results$classification_report) # classification_report
     print(results$imputation_time) # imputation tim?

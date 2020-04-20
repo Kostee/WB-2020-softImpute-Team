@@ -44,7 +44,7 @@ library(batchtools)
 
 # ułatwienie: btlapply
 
-registry <- makeRegistry(file.dir = "./file_registry", seed = 15390)
+registry <- makeRegistry(file.dir = "./registry", seed = 15390)
 getDefaultRegistry()
 # setDefaultRegistry()
 # clearRegistry()
