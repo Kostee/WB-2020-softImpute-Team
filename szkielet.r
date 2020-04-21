@@ -2,184 +2,9 @@
 #getwd()
 set.seed(123)
 
-library(mice)
-library(missForest)
-library(VIM)
-
-# not needed directly, but have to be installed
-#library(jsonlite)
-
-DFT_REPO_DATASET_DIR = './dependencies/datasets'
-getwd()
-
-#' Reads dataset based on id from directory
-#' @param openml_id int. Should be present in dataset_dir
-#' @param dataset_dir string with directory with subdirectories like 'openml_dataset_<openml_id>'
-#' @return list, where list$dataset contains processed data
-#' @seealso names(list)
-read_dataset <- function(openml_id, dataset_dir = DFT_REPO_DATASET_DIR){
-  
-  if (!dir.exists(dataset_dir)){
-    stop(paste(dataset_dir, 'does not exist' ))
-  }
-  
-  dir <- paste(dataset_dir, paste('openml_dataset', openml_id, sep = '_'), sep ='/')
-  if (!dir.exists(dir)){
-    stop(paste(dir, 'does not exist' ))
-  }
-  
-  start_dir <- getwd()
-  
-  #set right dir to code.R to acually work - it depends on dirlocation to create json
-  setwd(dir)
-   # use new env to avoid trashing globalenv
-  surogate_env = new.env(parent = .BaseNamespaceEnv)
-  attach(surogate_env)
-  source("code.R",surogate_env)
-  
-  j <- jsonlite::read_json('./dataset.json')
-  j$dataset <- surogate_env$dataset
-  setwd(start_dir)
- 
-  return(j)
-}
-
-
-#' Reads all dataset from given directory
-#' @param dataset_dir string with directory with subdirectories like 'openml_dataset_<openml_id>'
-#' 
-#' @return matrix with columns = c(dataset, target_name)
-#' 
-#' @example 
-#' dfs <- read_all_da?asets()
-#' df <- dfs[[1]]
-#' 
-#' target_name <- df$target
-#' cat('Target name: ', target_name)
-#' 
-#' n <- df$number_of_features_with_missings
-#' cat('Number of features with missing data: ', n)
-#' 
-#' @seealso names(list)
-read_all_datasets <- function(dataset_dir = DFT_REPO_DATASET_DIR){
-  
-  if (!dir.exists(dataset_dir)){
-    stop(paste(dataset_dir, 'does not exist'))
-  }
-  
-  start_dir <- getwd()
-  subdirs <- dir(dataset_dir)
-  ids <- sapply(subdirs, function(dir){substr(dir, 16, nchar(dir))})
-  datasets_combined <- sapply(ids, function(x){read_dataset(x, dataset_dir)})
-  
-  datasets_combined <- t(datasets_combined)
-  return(unname(t(datasets_combined)))
-}
-
-
-# IMPUTATION FUNCTIONS
-
-imputation_fun_mice <- function(df){
-  init <- mice(df, maxit=0) 
-  meth <- init$method
-  predM <- init$predictorMatrix
-  imputed <- mice(df, method=meth, predictorMatrix=predM, m=5)
-  completed <- complete(imputed)
-  return(completed)
-}
-
-imputation_fun_vim <- function(df){
-  no_columns <- length(df)
-  imputed <- kNN(df)
-  imputed <- imputed[,1:no_columns]
-  return(imputed)
-}
-
-imputation_fun_missForest <- function(df){
-  return(missForest(df)$ximp)
-}
-
-imputation_remove_rows <- function(df){
-  return (na.omit(df))}
-
-# impute median within numeric type columns and mode within character type ones 
-imputation_mode_median <- function(df){
-  
-  Mode <- function(x) {
-    ux <- unique(x)
-    ux[which.max(tabulate(match(x, ux)))]
-  }
-  
-  for (i in 1L:length(df)){
-    if (sum(is.na(df[,i])) > 0){
-      if (mode(df[,i]) == 'character' | is.factor(df[,i])){
-        to_imp <- Mode(df[,i])
-        df[,i][is.na(df[,i])] <- to_imp
-      }
-      else{
-        to_imp <- median(df[,i], na.rm = TRUE) 
-        df[,i][is.na(df[,i])] <- to_imp
-      }
-    }
-  }
-  
-  return(df)
-}
-
-
-#' Splits dataset into train and test sets, taking into account train size
-#' @param dataset dataset to split
-#' @param train_size size of train dataset, where 0 - no elements, 1 - all the elements
-#' @return lis?, where list[1] - train frame, list[2] - test frame
-train_test_split <- function(dataset, train_size){
-  smp_size <- floor(train_size * nrow(dataset))
-  typeof(smp_size)
-  
-  train_ind <- sample(seq_len(nrow(dataset)), size = smp_size)
-  
-  train <- dataset[train_ind, ]
-  test <- dataset[-train_ind, ]
-  
-  return (list(train, test))
-}
-
-
-# METRICS FUNCTIONS
-
-get_confusion_matrix <- function(test, pred){
-  return (table(Truth = test, Prediction = pred))
-}
-
-confusion_matrix_values <- function(confusion_matrix){
-  TP <- confusion_matrix[2,2]
-  TN <- confusion_matrix[1,1]
-  FP <- confusion_matrix[1,2]
-  FN <- confusion_matrix[2,1]
-  return (c(TP, TN, FP, FN))
-}
-
-accuracy <- function(confusion_matrix){
-  conf_matrix <- confusion_matrix_values(confusion_matrix)
-  return((conf_matrix[1] + conf_matrix[2]) / (conf_matrix[1] + conf_matrix[2] + conf_matrix[3] + conf_matrix[4]))
-}
-
-precision <- function(confusion_matrix){
-  conf_matrix <- confusion_matrix_values(confusion_matrix)
-  return(conf_matrix[1]/ (conf_matrix[1] + conf_matrix[3]))
-}
-
-recall <- function(confusion_matrix){
-  conf_matrix <- confusion_matrix_values(confusion_matrix)
-  return(conf_matrix[1] / (conf_matrix[1] + conf_matrix[4]))
-}
-
-f1 <- function(confusion_matrix){
-  conf_matrix <- confusion_matrix_values(confusion_matrix)
-  rec <- recall(confusion_matrix)
-  prec <- precision(confusion_matrix)
-  return(2 * (rec * prec) / (rec + prec))
-}
-
+source('./imputations_wrapped_functions.r')
+source('./metrics_functions.r')
+source('./reading_datasets_functions.r')
 
 library(rpart) # for classification tree
 get_result <- function(dataset_list, imputation_fun){
@@ -223,7 +48,7 @@ get_result <- function(dataset_list, imputation_fun){
   # in future maybe return all dataset_list ?
   # for now stick with readability
   
-  imp_method_name <- as.character(substitute(imputation_fun))
+  imp_method_name <- deparse(substitute(imputation_fun))
   
   return(list( dataset_id = dataset_list$id, 
                imp_method = imp_method_name,
@@ -250,29 +75,52 @@ targets <- lapply(data_all, function(d){d$target})
 #PARALLEL ROBI BRRRRR [TODO bo nie wiem jak]
 library(batchtools)
 
-loadRegistry(file.dir = './registry', writeable = TRUE)
-
 # THIS WILL ERASE ALL PREVIOUS COMPUTATUONS
 # # clearRegistry()
 
 # this creates new registry
 # # registry <- makeRegistry(file.dir = "./registry", seed = 15390)
 
+loadRegistry(file.dir = './registry', writeable = TRUE)
+
 makeClusterFunctionsMulticore()
 
-# careful to run once, should have 40 jobs in getJobTable()
-batchMap(fun = get_result, dataset = data_all, imputation_fun = rep(imputations, length(data_all)))
+data_all_male_i_bezproblemowe <- data_all[c(-1, -3, -4, -7)]
+
+# careful to run once, will result in 40 jobs in getJobTable()
+#batchMap(fun = get_result, dataset = data_all, imputation_fun = rep(imputations, length(data_all)))
+
+
+# pojedynczo dla kazdej imputacji, zeby mniej sie wywalalo rstudio
+batchMap(fun = get_result, dataset = data_all_male_i_bezproblemowe, imputation_fun = imputations[2])
+submitJobs(resources = list(walltime = 60))
+
+batchMap(fun = get_result, dataset = data_all_male_i_bezproblemowe, imputation_fun = imputations[3])
+submitJobs(resources = list(walltime = 60))
+
+batchMap(fun = get_result, dataset = data_all_male_i_bezproblemowe, imputation_fun = imputations[4])
+submitJobs(resources = list(walltime = 60))
+
+batchMap(fun = get_result, dataset = data_all_male_i_bezproblemowe, imputation_fun = imputations[5])
+submitJobs(resources = list(walltime = 60))
+
 getJobTable()
 
+#clearRegistry()
 # resources = list(walltime = 3600, memory = 1024)
 # see more at resources at ?submitJobs
-submitJobs()
+submitJobs(resources = list(walltime = 60))
+
+getJobTable()
 
 waitForJobs()
 
 
 # ...
 # ...
+
+
+
 
 
 # every imputation on each dataset
