@@ -40,7 +40,7 @@ read_dataset <- function(openml_id, dataset_dir = DFT_REPO_DATASET_DIR){
 #' @return matrix with columns = c(dataset, target_name)
 #' 
 #' @example 
-#' dfs <- read_all_da?asets()
+#' dfs <- read_all_datasets()
 #' df <- dfs[[1]]
 #' 
 #' target_name <- df$target
