@@ -72,6 +72,42 @@ imputations <- list(imputation_fun_vim, imputation_fun_missForest,
 targets <- lapply(data_all, function(d){d$target})
 
 
+
+#PARALLEL ROBI BRRRRR I TEN JAKO JEDYNY DZIAŁA!
+library(parallelMap)
+parallelStartMulticore(8, show.info = TRUE)
+
+res1 <- parallelLapply(data_all, function(x){get_result(x,imputation_remove_rows)}, impute.error = function(x){'ERROR'})
+res2 <- parallelLapply(data_all, function(x){get_result(x,imputation_mode_median)}, impute.error = function(x){'ERROR'})
+res3 <- parallelLapply(data_all, function(x){get_result(x,imputation_fun_mice)}, impute.error = function(x){'ERROR'})
+res4 <- parallelLapply(data_all, function(x){get_result(x,imputation_fun_missForest)}, impute.error = function(x){'ERROR'})
+res5 <- parallelLapply(data_all, function(x){get_result(x,imputation_fun_vim)}, impute.error = function(x){'ERROR'})
+
+
+
+
+### Tu juz nie dziala
+datasets_all <- lapply(data_all, function(x){x$dataset})
+res <- parallelLapply(datasets_all, imputation_fun_mice)
+
+library(parallel)
+
+parallel::setDefaultCluster()
+Job1 = mcparallel(res <- parallelLapply(datasets_all, imputation_fun_mice, impute.error = function(x){'ERROR'} ))
+Job2 = mcparallel(res <- parallelLapply(datasets_all, imputation_remove_rows, impute.error = function(x){'ERROR'}))
+Job3 = mcparallel(res <- parallelLapply(datasets_all, imputation_mode_median, impute.error = function(x){'ERROR'}))
+Job4 = mcparallel(res <- parallelLapply(datasets_all, imputation_fun_vim, impute.error = function(x){'ERROR'}))
+Job5 = mcparallel(res <- parallelLapply(datasets_all, imputation_fun_missForest, impute.error = function(x){'ERROR'}))
+
+(res <- parallelLapply(data_all, function(x){get_result(x,imputation_remove_rows)}, impute.error = function(x){'ERROR'}))
+
+
+JobResult1 = mccollect(Job1)
+JobResult2 = mccollect(Job2)
+JobResult3 = mccollect(Job3)
+JobResult4 = mccollect(Job4)
+JobResult5 = mccollect(Job5)
+
 #PARALLEL ROBI BRRRRR [TODO bo nie wiem jak]
 library(batchtools)
 
