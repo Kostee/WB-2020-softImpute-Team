@@ -1,0 +1,291 @@
+---
+title: "The imputation methods big test"
+author: "Jakub Kosterna, Dawid Przybyliński & Hanna Zdulska"
+date: "22/04/2020"
+output:
+  html_document:
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Abstract
+
+Choosing the best-suited imputation is the daily dilemma of every data scientist. Some of they believe the crux lies in the most advanced and sophisticated, the others trust the simplest of all possible.
+
+In this document we will try to find one objectively the finest imputation method by testing five of popular ones on eight specially selected data sets prepared for these operations.
+
+## Imputation functions
+
+We'll look at the two simple imputation methods with the following short markings:
+
+1. *I1* / *modeMedian* - missing data supplemented with medians from individual columns
+2. *I2* / *removeRows* - all the rows with any nonexistent values removed
+
+```{r imputation_basic_functions}
+imputation_mode_median <- function(df){
+  
+  Mode <- function(x) {
+    ux <- unique(x)
+    ux[which.max(tabulate(match(x, ux)))]
+  }
+  
+  for (i in 1L:length(df)){
+    if (sum(is.na(df[,i])) > 0){
+      if (mode(df[,i]) == 'character' | is.factor(df[,i])){
+        to_imp <- Mode(df[,i])
+        df[,i][is.na(df[,i])] <- to_imp
+      }
+      else{
+        to_imp <- median(df[,i], na.rm = TRUE) 
+        df[,i][is.na(df[,i])] <- to_imp
+      }
+    }
+  }
+  
+  return(df)
+}
+
+imputation_remove_rows <- function(df){
+  return (na.omit(df))
+}
+```
+
+... and also three more advanced algorithms from popular libraries:
+
+3. *I3* - *mice*
+4. *I4* - *vim*
+5. *I5* - *missForest*
+
+```{r imputation_advanced_functions, message = FALSE, warning = FALSE}
+library(mice)
+imputation_fun_mice <- function(df){
+  init <- mice(df, maxit=0) 
+  meth <- init$method
+  predM <- init$predictorMatrix
+  imputed <- mice(df, method=meth, predictorMatrix=predM, m=5)
+  completed <- complete(imputed)
+  return(completed)
+}
+
+library(VIM)
+imputation_fun_vim <- function(df){
+  no_columns <- length(df)
+  imputed <- kNN(df)
+  imputed <- imputed[,1:no_columns]
+  return(imputed)
+}
+
+library(missForest)
+imputation_fun_missForest <- function(df){
+  return(missForest(df)$ximp)
+}
+```
+
+## Reading datasets
+
+The eight data frames on which we will test these above were taken from **OpenML100 collection** and were corrected specifically for this research. They can be found under the following identifiers with the following names:
+
+* 29 - *credit-approval*
+* 38 - *sick*
+* 188 - *eucalyptus*
+* 1590 - *adult*
+* 6332 - *cylinder-bands*
+* 23381 - *dresses-sales*
+* 40536 - *SpeedDating*
+* 41278 - *okcupid-stem*
+
+Those above have been placed in individual directories identified by id in the prepared directory.
+
+```{r read_dataset}
+DFT_REPO_DATASET_DIR = './dependencies/datasets'
+
+read_dataset <- function(openml_id, dataset_dir = DFT_REPO_DATASET_DIR){
+  
+  if (!dir.exists(dataset_dir)){
+    stop(paste(dataset_dir, 'does not exist' ))
+  }
+  
+  dir <- paste(dataset_dir, paste('openml_dataset', openml_id, sep = '_'), sep ='/')
+  if (!dir.exists(dir)){
+    stop(paste(dir, 'does not exist' ))
+  }
+  
+  start_dir <- getwd()
+  
+  # set right dir to code.R to acually work - it depends on dirlocation to create json
+  setwd(dir)
+  # use new env to avoid trashing globalenv
+  surogate_env <- new.env(parent = .BaseNamespaceEnv)
+  attach(surogate_env)
+  source("code.R",surogate_env)
+  
+  j <- jsonlite::read_json('./dataset.json')
+  j$dataset <- surogate_env$dataset
+  setwd(start_dir)
+  
+  return(j)
+}
+```
+
+In order to read all the eight datasets we will use other function, which will return a dataframe containing all the important informations about the test matrices.
+
+```{r read_all_datasets}
+read_all_datasets <- function(dataset_dir = DFT_REPO_DATASET_DIR){
+  
+  if (!dir.exists(dataset_dir)){
+    stop(paste(dataset_dir, 'does not exist'))
+  }
+  
+  start_dir <- getwd()
+  subdirs <- dir(dataset_dir)
+  ids <- sapply(subdirs, function(dir){substr(dir, 16, nchar(dir))})
+  datasets_combined <- lapply(ids, function(x){read_dataset(x, dataset_dir)})
+  
+  datasets_combined <- t(datasets_combined)
+  return(unname(t(datasets_combined)))
+}
+```
+
+## Metrics functions
+
+In order to test the same test-train splits we'll use one random seed 1357 for all datasets.
+
+```{r train_test_split}
+set.seed(1357)
+
+train_test_split <- function(dataset, train_size){
+  smp_size <- floor(train_size * nrow(dataset))
+  typeof(smp_size)
+  
+  train_ind <- sample(seq_len(nrow(dataset)), size = smp_size)
+  
+  train <- dataset[train_ind, ]
+  test <- dataset[-train_ind, ]
+  
+  return (list(train, test))
+}
+```
+
+For each machine learning model after every imputation we will get the confusion matrix and the values of four basic metrics:
+
+* *accuracy* - $\frac{TP+TN}{TP+FP+FN+TN}$
+* *precision* - $\frac{TP}{TP+FP}$
+* *recall* - $\frac{TP}{TP+FN}$
+* *f1* - $2*\frac{Recall * Precision}{Recall + Precision}$
+
+```{r metrics}
+get_confusion_matrix <- function(test, pred){
+  return (table(Truth = test, Prediction = pred))
+}
+
+confusion_matrix_values <- function(confusion_matrix){
+  TP <- confusion_matrix[2,2]
+  TN <- confusion_matrix[1,1]
+  FP <- confusion_matrix[1,2]
+  FN <- confusion_matrix[2,1]
+  return (c(TP, TN, FP, FN))
+}
+
+accuracy <- function(confusion_matrix){
+  conf_matrix <- confusion_matrix_values(confusion_matrix)
+  return((conf_matrix[1] + conf_matrix[2]) / (conf_matrix[1] + conf_matrix[2] + conf_matrix[3] + conf_matrix[4]))
+}
+
+precision <- function(confusion_matrix){
+  conf_matrix <- confusion_matrix_values(confusion_matrix)
+  return(conf_matrix[1]/ (conf_matrix[1] + conf_matrix[3]))
+}
+
+recall <- function(confusion_matrix){
+  conf_matrix <- confusion_matrix_values(confusion_matrix)
+  return(conf_matrix[1] / (conf_matrix[1] + conf_matrix[4]))
+}
+
+f1 <- function(confusion_matrix){
+  conf_matrix <- confusion_matrix_values(confusion_matrix)
+  rec <- recall(confusion_matrix)
+  prec <- precision(confusion_matrix)
+  return(2 * (rec * prec) / (rec + prec))
+}
+```
+
+## Imputation results
+
+```{r ger_result_function}
+library(rpart)
+get_result <- function(dataset_list, imputation_fun){
+  
+  dataset <- dataset_list$dataset
+  name_of_target <- dataset_list$target
+  
+  # imputation
+  imputation_start = Sys.time() # start to measure time
+  imputated_dataset <- imputation_fun(dataset) 
+  imputation_stop = Sys.time() # end measuring time
+  
+  # train test split
+  train_test <- train_test_split(imputated_dataset, 0.8)
+  train <- as.data.table(train_test[1])
+  test <- as.data.table(train_test[2])
+  
+  # modelling
+  vars <- colnames(dataset)[colnames(dataset)!=name_of_target]
+  my_formula <- as.formula(paste(name_of_target, paste(vars, collapse=" + "), sep=" ~ "))
+  modelling_start = Sys.time() # start to measure time
+  tree_model <- rpart(formula = my_formula, data = train,
+                      method = "class", control = rpart.control(cp = 0))
+  y_pred <- as.data.frame(predict(tree_model, test, type = "class"))
+  modelling_stop = Sys.time() # end measuring time
+  
+  # calculating metrics
+  confusion_matrix <- get_confusion_matrix(test[[name_of_target]], y_pred[,1])
+  
+  accuracy_v <- accuracy(confusion_matrix)
+  precision_v <- precision(confusion_matrix)
+  recall_v <- recall(confusion_matrix)
+  f1_v <- f1(confusion_matrix)
+  
+  classification_report <- data.frame(accuracy_v, precision_v,
+                                      recall_v, f1_v)
+  colnames(classification_report) <- c("accuracy", "precision",
+                                       "recall", "f1")
+  
+  dataset_list$dataset <- NULL
+  # in future maybe return all dataset_list ?
+  # for now stick with readability
+  
+  imp_method_name <- deparse(substitute(imputation_fun))
+  
+  return(list( dataset_id = dataset_list$id, 
+               imp_method = imp_method_name,
+               confusion_matrix = confusion_matrix,
+               classification_report = classification_report,
+               imputation_time = imputation_stop - imputation_start,
+               modelling_time = modelling_stop - modelling_start))
+}
+
+data_all <- read_all_datasets()
+
+# imputations and targets preparation
+imputations <- list(imputation_fun_vim, imputation_fun_missForest,
+                    imputation_remove_rows, imputation_mode_median, imputation_fun_mice)
+targets <- lapply(data_all, function(d){d$target})
+```
+
+Here are the results:
+
+```{r print_results}
+for (imputation in imputations){
+  for(i in 1:8){
+    results <- get_result(data_all[[i]], imputation)
+    print(paste0("Dataset id: ", results$id, ", method: ", results$imp_method))
+    print(paste0("Confusion matrix: ", results$confusion_matrix))
+    print(paste0("Classification report: ", results$classification_report))
+    print(paste0("Imputation time: ", results$imputation_time))
+    print(paste0("Modelling time: ", results$modelling_time))
+  }
+}
+```
