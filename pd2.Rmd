@@ -214,7 +214,7 @@ f1 <- function(confusion_matrix){
 
 ## Imputation results
 
-```{r ger_result_function}
+```{r get_result_function}
 library(rpart)
 get_result <- function(dataset_list, imputation_fun){
   
@@ -277,15 +277,62 @@ targets <- lapply(data_all, function(d){d$target})
 
 Here are the results:
 
-```{r print_results}
-for (imputation in imputations){
-  for(i in 1:8){
-    results <- get_result(data_all[[i]], imputation)
-    print(paste0("Dataset id: ", results$id, ", method: ", results$imp_method))
-    print(paste0("Confusion matrix: ", results$confusion_matrix))
-    print(paste0("Classification report: ", results$classification_report))
-    print(paste0("Imputation time: ", results$imputation_time))
-    print(paste0("Modelling time: ", results$modelling_time))
-  }
+```{r warning=FALSE}
+
+  library(knitr)
+  results <- c(list(0),list(0),list(0),list(0),list(0))
+  results[[1]] <- readRDS('./part_results/res1.rds')
+  results[[2]] <- readRDS('./part_results/res2.rds')
+  results[[3]] <- readRDS('./part_results/res3.rds')
+  results[[4]] <- readRDS('./part_results/res4.rds')
+  results[[5]] <- readRDS('./part_results/res5.rds')
+
+  result_table <- function(ds_it){
+    d <- data.frame(matrix(ncol = 7, nrow = 0))
+    colnames(d) <- c("imputation", "accuracy", "precision", "recall", "f1", "imp_time", "mod_time")
+    for (i in 1:length(imputations)){
+      if (length(results[[i]][[ds_it]]) != 1){ # length equal 1 means "ERROR" was generated in partial results 
+        d[i,] <- c(results[[i]][[ds_it]]$imp_method,
+               round(as.numeric(results[[i]][[ds_it]]$classification_report$accuracy),3),   
+               round(as.numeric(results[[i]][[ds_it]]$classification_report$precision),3),
+               round(as.numeric(results[[i]][[ds_it]]$classification_report$recall),3),
+               round(as.numeric(results[[i]][[ds_it]]$classification_report$f1),3),
+               round(as.numeric(results[[i]][[ds_it]]$imputation_time),3),
+               round(as.numeric(results[[i]][[ds_it]]$modelling_time),3)) 
+      }
+    }
+    d
 }
+
+  # change i bound to number of datasets 
+  for (i in c(1,2,3,5,6,7,8,9)){
+    kable(result_table(i), caption = paste("Dataset id: ", results[[1]][[i]]$dataset_id, sep = ""))
+  }
+  
+  # jest taki problem że kable w pętli nie wypluwa wyniku, chyba że damy print(kable()) wtedy jednak brzydko wygląda
+  
+  kable(result_table(1), caption = paste("Dataset id: ", results[[1]][[1]]$dataset_id, sep = ""))
+  kable(result_table(2), caption = paste("Dataset id: ", results[[1]][[2]]$dataset_id, sep = ""))
+  kable(result_table(3), caption = paste("Dataset id: ", results[[1]][[3]]$dataset_id, sep = ""))
+  kable(result_table(5), caption = paste("Dataset id: ", results[[1]][[5]]$dataset_id, sep = ""))
+  kable(result_table(6), caption = paste("Dataset id: ", results[[1]][[6]]$dataset_id, sep = ""))
+  kable(result_table(7), caption = paste("Dataset id: ", results[[1]][[7]]$dataset_id, sep = ""))
+  kable(result_table(8), caption = paste("Dataset id: ", results[[1]][[8]]$dataset_id, sep = ""))
+  kable(result_table(9), caption = paste("Dataset id: ", results[[1]][[9]]$dataset_id, sep = ""))
+  
+  
+```
+
+
+```{r print_results}
+# for (imputation in imputations){
+#  for(i in 1:8){
+#    results <- get_result(data_all[[i]], imputation)
+#    print(paste0("Dataset id: ", results$id, ", method: ", results$imp_method))
+#    print(paste0("Confusion matrix: ", results$confusion_matrix))
+#    print(paste0("Classification report: ", results$classification_report))
+#    print(paste0("Imputation time: ", results$imputation_time))
+#    print(paste0("Modelling time: ", results$modelling_time))
+#  }
+#}
 ```
