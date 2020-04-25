@@ -47,7 +47,6 @@ imputation_mode_median <- function(df){
   
   return(df)
 }
-
 imputation_remove_rows <- function(df){
   return (na.omit(df))
 }
@@ -69,7 +68,6 @@ imputation_fun_mice <- function(df){
   completed <- complete(imputed)
   return(completed)
 }
-
 library(VIM)
 imputation_fun_vim <- function(df){
   no_columns <- length(df)
@@ -77,7 +75,6 @@ imputation_fun_vim <- function(df){
   imputed <- imputed[,1:no_columns]
   return(imputed)
 }
-
 library(missForest)
 imputation_fun_missForest <- function(df){
   return(missForest(df)$ximp)
@@ -88,8 +85,9 @@ imputation_fun_missForest <- function(df){
 
 The eight data frames on which we will test these above were taken from **OpenML100 collection** and were corrected specifically for this research. They can be found under the following identifiers with the following names:
 
-* 29 - *credit-approval*
+* 29 - *credit-approval* PÓKI CO NIE BANGLA
 * 38 - *sick*
+* 56 - ...
 * 188 - *eucalyptus*
 * 1590 - *adult*
 * 6332 - *cylinder-bands*
@@ -101,7 +99,6 @@ Those above have been placed in individual directories identified by id in the p
 
 ```{r read_dataset}
 DFT_REPO_DATASET_DIR = './dependencies/datasets'
-
 read_dataset <- function(openml_id, dataset_dir = DFT_REPO_DATASET_DIR){
   
   if (!dir.exists(dataset_dir)){
@@ -155,7 +152,6 @@ In order to test the same test-train splits we'll use one random seed 1357 for a
 
 ```{r train_test_split}
 set.seed(1357)
-
 train_test_split <- function(dataset, train_size){
   smp_size <- floor(train_size * nrow(dataset))
   typeof(smp_size)
@@ -180,7 +176,6 @@ For each machine learning model after every imputation we will get the confusion
 get_confusion_matrix <- function(test, pred){
   return (table(Truth = test, Prediction = pred))
 }
-
 confusion_matrix_values <- function(confusion_matrix){
   TP <- confusion_matrix[2,2]
   TN <- confusion_matrix[1,1]
@@ -188,22 +183,18 @@ confusion_matrix_values <- function(confusion_matrix){
   FN <- confusion_matrix[2,1]
   return (c(TP, TN, FP, FN))
 }
-
 accuracy <- function(confusion_matrix){
   conf_matrix <- confusion_matrix_values(confusion_matrix)
   return((conf_matrix[1] + conf_matrix[2]) / (conf_matrix[1] + conf_matrix[2] + conf_matrix[3] + conf_matrix[4]))
 }
-
 precision <- function(confusion_matrix){
   conf_matrix <- confusion_matrix_values(confusion_matrix)
   return(conf_matrix[1]/ (conf_matrix[1] + conf_matrix[3]))
 }
-
 recall <- function(confusion_matrix){
   conf_matrix <- confusion_matrix_values(confusion_matrix)
   return(conf_matrix[1] / (conf_matrix[1] + conf_matrix[4]))
 }
-
 f1 <- function(confusion_matrix){
   conf_matrix <- confusion_matrix_values(confusion_matrix)
   rec <- recall(confusion_matrix)
@@ -214,71 +205,68 @@ f1 <- function(confusion_matrix){
 
 ## Imputation results
 
-```{r get_result_function}
+```{r get_result_function, warning = FALSE, message = FALSE}
 library(rpart)
 get_result <- function(dataset_list, imputation_fun){
   
-  dataset <- dataset_list$dataset
-  name_of_target <- dataset_list$target
-  
-  # imputation
-  imputation_start = Sys.time() # start to measure time
-  imputated_dataset <- imputation_fun(dataset) 
-  imputation_stop = Sys.time() # end measuring time
-  
-  # train test split
-  train_test <- train_test_split(imputated_dataset, 0.8)
-  train <- as.data.table(train_test[1])
-  test <- as.data.table(train_test[2])
-  
-  # modelling
-  vars <- colnames(dataset)[colnames(dataset)!=name_of_target]
-  my_formula <- as.formula(paste(name_of_target, paste(vars, collapse=" + "), sep=" ~ "))
-  modelling_start = Sys.time() # start to measure time
-  tree_model <- rpart(formula = my_formula, data = train,
-                      method = "class", control = rpart.control(cp = 0))
-  y_pred <- as.data.frame(predict(tree_model, test, type = "class"))
-  modelling_stop = Sys.time() # end measuring time
-  
-  # calculating metrics
-  confusion_matrix <- get_confusion_matrix(test[[name_of_target]], y_pred[,1])
-  
-  accuracy_v <- accuracy(confusion_matrix)
-  precision_v <- precision(confusion_matrix)
-  recall_v <- recall(confusion_matrix)
-  f1_v <- f1(confusion_matrix)
-  
-  classification_report <- data.frame(accuracy_v, precision_v,
-                                      recall_v, f1_v)
-  colnames(classification_report) <- c("accuracy", "precision",
-                                       "recall", "f1")
-  
-  dataset_list$dataset <- NULL
-  # in future maybe return all dataset_list ?
-  # for now stick with readability
-  
-  imp_method_name <- deparse(substitute(imputation_fun))
-  
-  return(list( dataset_id = dataset_list$id, 
-               imp_method = imp_method_name,
-               confusion_matrix = confusion_matrix,
-               classification_report = classification_report,
-               imputation_time = imputation_stop - imputation_start,
-               modelling_time = modelling_stop - modelling_start))
+dataset <- dataset_list$dataset
+name_of_target <- dataset_list$target
+
+# imputation
+imputation_start = Sys.time() # start to measure time
+imputated_dataset <- imputation_fun(dataset) 
+imputation_stop = Sys.time() # end measuring time
+
+# train test split
+train_test <- train_test_split(imputated_dataset, 0.8)
+train <- as.data.table(train_test[1])
+test <- as.data.table(train_test[2])
+
+# modelling
+vars <- colnames(dataset)[colnames(dataset)!=name_of_target]
+my_formula <- as.formula(paste(name_of_target, paste(vars, collapse=" + "), sep=" ~ "))
+modelling_start = Sys.time() # start to measure time
+tree_model <- rpart(formula = my_formula, data = train,
+                    method = "class", control = rpart.control(cp = 0))
+y_pred <- as.data.frame(predict(tree_model, test, type = "class"))
+modelling_stop = Sys.time() # end measuring time
+
+# calculating metrics
+confusion_matrix <- get_confusion_matrix(test[[name_of_target]], y_pred[,1])
+
+accuracy_v <- accuracy(confusion_matrix)
+precision_v <- precision(confusion_matrix)
+recall_v <- recall(confusion_matrix)
+f1_v <- f1(confusion_matrix)
+
+classification_report <- data.frame(accuracy_v, precision_v,
+                                    recall_v, f1_v)
+colnames(classification_report) <- c("accuracy", "precision",
+                                     "recall", "f1")
+
+dataset_list$dataset <- NULL
+# in future maybe return all dataset_list ?
+# for now stick with readability
+
+imp_method_name <- deparse(substitute(imputation_fun))
+
+return(list( dataset_id = dataset_list$id, 
+             imp_method = imp_method_name,
+             confusion_matrix = confusion_matrix,
+             classification_report = classification_report,
+             imputation_time = imputation_stop - imputation_start,
+             modelling_time = modelling_stop - modelling_start))
 }
-
 data_all <- read_all_datasets()
-
 # imputations and targets preparation
 imputations <- list(imputation_fun_vim, imputation_fun_missForest,
-                    imputation_remove_rows, imputation_mode_median, imputation_fun_mice)
+                  imputation_remove_rows, imputation_mode_median, imputation_fun_mice)
 targets <- lapply(data_all, function(d){d$target})
 ```
 
 Here are the results:
 
 ```{r warning=FALSE}
-
   library(knitr)
   results <- c(list(0),list(0),list(0),list(0),list(0))
   results[[1]] <- readRDS('./part_results/res1.rds')
@@ -286,7 +274,6 @@ Here are the results:
   results[[3]] <- readRDS('./part_results/res3.rds')
   results[[4]] <- readRDS('./part_results/res4.rds')
   results[[5]] <- readRDS('./part_results/res5.rds')
-
   result_table <- function(ds_it){
     d <- data.frame(matrix(ncol = 7, nrow = 0))
     colnames(d) <- c("imputation", "accuracy", "precision", "recall", "f1", "imp_time", "mod_time")
@@ -303,7 +290,6 @@ Here are the results:
     }
     d
 }
-
   # change i bound to number of datasets 
   for (i in c(1,2,3,5,6,7,8,9)){
     kable(result_table(i), caption = paste("Dataset id: ", results[[1]][[i]]$dataset_id, sep = ""))
@@ -323,16 +309,47 @@ Here are the results:
   
 ```
 
+## Comparing imputation times
 
-```{r print_results}
-# for (imputation in imputations){
-#  for(i in 1:8){
-#    results <- get_result(data_all[[i]], imputation)
-#    print(paste0("Dataset id: ", results$id, ", method: ", results$imp_method))
-#    print(paste0("Confusion matrix: ", results$confusion_matrix))
-#    print(paste0("Classification report: ", results$classification_report))
-#    print(paste0("Imputation time: ", results$imputation_time))
-#    print(paste0("Modelling time: ", results$modelling_time))
-#  }
-#}
-```
+TODO:
+1. weź w ramkę danych czasy imputacji po zbiorach (x - id zbioru, y - czas imputacji)
+2. Zrób z tego ggplota z wykresem liniowym (jakiś ładny theme, title, itp. of course)
+3. Wysnuj wnioski o najszybszych i najwolniejszych imputacjach
+
+
+facet?
+x - id zbioru, y - czas imputacji, z - procent braków
+kategoryczny, ciągły, ciągły
+
+facet?
+x - id zbioru, y - czas imputacji, z - wielkość zbioru
+kategoryczny, ciągły, ciągły
+
+
+## Comparing modelling times
+
+TODO: to co wyżej, ale na czasach modelowania. Pewnie wniosek, że czas modelowania mega podobny
+
+## Best measures
+
+TODO:
+1. weź w CZTERY ramki danych cztery miary po zbiorach (x - id zbioru, y - wynik miary)
+2. Z pomocą grid_arrange() połącz cztery ggploty z wykresami liniowymi
+3. Wysnuj wnioski o najlepszych i najgorszych miarach na podstawie obrazka
+
+4. Wylicz średnie i wariancje dla wszystkich analizowanych zbiorów dla czterech miar
+5. Zrób prostego ggplota średnich, a imputacji
+6. Zrób prostego ggplota wariancji, a imputacji
+7. Wysnuj wnioski z powyższych dwóch wykresów na podstawie wyliczonych prostych miar
+
+## imputation time and its results
+
+1. Wykres po zbiorach: średnich czasów imputacji a średnich wyników miar.
+2. Wnioski z tego wykresu. Czy są imputacji i lepsze i szybsze? Czy są i wolniejsze i gorsze? PYTANIE: jaki wykres, w jakiej formie?
+
+## Conclusion
+
+TODO: 1. Podsumowanie i wnioski
+
+
+OPCJONALNIE: porównanie wielkości zbiorów a czasów imputacji
