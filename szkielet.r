@@ -75,100 +75,65 @@ targets <- lapply(data_all, function(d){d$target})
 
 #PARALLEL ROBI BRRRRR I TEN JAKO JEDYNY DZIAŁA!
 library(parallelMap)
-parallelStartMulticore(8, show.info = TRUE)
+rdzenie <- parallel::detectCores()
+parallelStartMulticore(rdzenie, show.info = TRUE)
 
-res1 <- parallelLapply(data_all, function(x){get_result(x,imputation_remove_rows)}, impute.error = function(x){'ERROR'})
-res2 <- parallelLapply(data_all, function(x){get_result(x,imputation_mode_median)}, impute.error = function(x){'ERROR'})
-res3 <- parallelLapply(data_all, function(x){get_result(x,imputation_fun_mice)}, impute.error = function(x){'ERROR'})
-res4 <- parallelLapply(data_all, function(x){get_result(x,imputation_fun_missForest)}, impute.error = function(x){'ERROR'})
-res5 <- parallelLapply(data_all, function(x){get_result(x,imputation_fun_vim)}, impute.error = function(x){'ERROR'})
+#res1 <- parallelLapply(data_all, function(x){get_result(x,imputation_remove_rows)}, impute.error = function(x){'ERROR'})
+#res2 <- parallelLapply(data_all, function(x){get_result(x,imputation_mode_median)}, impute.error = function(x){'ERROR'})
+#res3 <- parallelLapply(data_all, function(x){get_result(x,imputation_fun_mice)}, impute.error = function(x){'ERROR'})
+#res4 <- parallelLapply(data_all, function(x){get_result(x,imputation_fun_missForest)}, impute.error = function(x){'ERROR'})
+#res5 <- parallelLapply(data_all, function(x){get_result(x,imputation_fun_vim)}, impute.error = function(x){'ERROR'})
 
-
-
-
-### Tu juz nie dziala
-datasets_all <- lapply(data_all, function(x){x$dataset})
-res <- parallelLapply(datasets_all, imputation_fun_mice)
-
-library(parallel)
-
-parallel::setDefaultCluster()
-Job1 = mcparallel(res <- parallelLapply(datasets_all, imputation_fun_mice, impute.error = function(x){'ERROR'} ))
-Job2 = mcparallel(res <- parallelLapply(datasets_all, imputation_remove_rows, impute.error = function(x){'ERROR'}))
-Job3 = mcparallel(res <- parallelLapply(datasets_all, imputation_mode_median, impute.error = function(x){'ERROR'}))
-Job4 = mcparallel(res <- parallelLapply(datasets_all, imputation_fun_vim, impute.error = function(x){'ERROR'}))
-Job5 = mcparallel(res <- parallelLapply(datasets_all, imputation_fun_missForest, impute.error = function(x){'ERROR'}))
-
-(res <- parallelLapply(data_all, function(x){get_result(x,imputation_remove_rows)}, impute.error = function(x){'ERROR'}))
+#starttime <- Sys.time()
+#res5 <- parallelLapply(data_all, function(x){get_result(x,imputation_fun_vim)}, impute.error = function(x){'ERROR'})
+#endtime <- Sys.time()
+#cat('done in ', endtime - starttime)
 
 
-JobResult1 = mccollect(Job1)
-JobResult2 = mccollect(Job2)
-JobResult3 = mccollect(Job3)
-JobResult4 = mccollect(Job4)
-JobResult5 = mccollect(Job5)
-
-#PARALLEL ROBI BRRRRR [TODO bo nie wiem jak]
-library(batchtools)
-
-# THIS WILL ERASE ALL PREVIOUS COMPUTATUONS
-# # clearRegistry()
-
-# this creates new registry
-# # registry <- makeRegistry(file.dir = "./registry", seed = 15390)
-
-loadRegistry(file.dir = './registry', writeable = TRUE)
-
-makeClusterFunctionsMulticore()
-
-data_all_male_i_bezproblemowe <- data_all[c(-1, -3, -4, -7)]
-
-# careful to run once, will result in 40 jobs in getJobTable()
-#batchMap(fun = get_result, dataset = data_all, imputation_fun = rep(imputations, length(data_all)))
-
-
-# pojedynczo dla kazdej imputacji, zeby mniej sie wywalalo rstudio
-batchMap(fun = get_result, dataset = data_all_male_i_bezproblemowe, imputation_fun = imputations[2])
-submitJobs(resources = list(walltime = 60))
-
-batchMap(fun = get_result, dataset = data_all_male_i_bezproblemowe, imputation_fun = imputations[3])
-submitJobs(resources = list(walltime = 60))
-
-batchMap(fun = get_result, dataset = data_all_male_i_bezproblemowe, imputation_fun = imputations[4])
-submitJobs(resources = list(walltime = 60))
-
-batchMap(fun = get_result, dataset = data_all_male_i_bezproblemowe, imputation_fun = imputations[5])
-submitJobs(resources = list(walltime = 60))
-
-getJobTable()
-
-#clearRegistry()
-# resources = list(walltime = 3600, memory = 1024)
-# see more at resources at ?submitJobs
-submitJobs(resources = list(walltime = 60))
-
-getJobTable()
-
-waitForJobs()
-
-
-# ...
-# ...
+saveRDS(res1, file = './part_results/res1_new.rds')
+saveRDS(res2, file = './part_results/res2_new.rds')
+# saveRDS(res3, file = './part_results/res3.rds')
+# saveRDS(res4, file = './part_results/res4.rds')
+# saveRDS(res5, file = './part_results/res5.rds')
 
 
 
+# id 29 naprawione
+v <- c(1590,188,23381,29,38,40536,41278,56,6332)
 
+s <- c()
+for(i in 1:14L){
+  s <- c(s, ! (data_all[[i]]$id %in% v))
+}
+
+data_new <- data_all[s]
+
+starttime <- Sys.time()
+nres1 <- parallelLapply(data_new[-1], function(x){get_result(x,imputation_remove_rows)}, impute.error = function(x){'ERROR'})
+nres2 <- parallelLapply(data_new, function(x){get_result(x,imputation_mode_median)}, impute.error = function(x){'ERROR'})
+nres3 <- parallelLapply(data_new, function(x){get_result(x,imputation_fun_mice)}, impute.error = function(x){'ERROR'})
+
+nres4 <- parallelLapply(data_new, function(x){get_result(x,imputation_fun_missForest)}, impute.error = function(x){'ERROR'})
+nres5 <- parallelLapply(data_new, function(x){get_result(x,imputation_fun_vim)}, impute.error = function(x){'ERROR'})
+endtime <- Sys.time()
+endtime - starttime
+
+res1 <- readRDS('./part_results/res1.rds')
+
+
+
+# To jest niewydajne
 
 # every imputation on each dataset
-for (imputation in imputations){
-  for(i in 1:8){
-    results <- get_result(data_all[[i]], imputation)
-    print(results$id)
-    print(results$imp_method)
-    print(results$confusion_matrix) # confusion_matrix
-    print(results$classification_report) # classification_report
-    print(results$imputation_time) # imputation tim?
-    print(results$modelling_time) # modelling time
-  }
-}
+#for (imputation in imputations){
+#  for(i in 1:8){
+#    results <- get_result(data_all[[i]], imputation)
+#    print(results$id)
+#    print(results$imp_method)
+#    print(results$confusion_matrix) # confusion_matrix
+#    print(results$classification_report) # classification_report
+#    print(results$imputation_time) # imputation tim?
+#    print(results$modelling_time) # modelling time
+#  }
+#}
 # Działa dla dobrze wczytanych datasetów
