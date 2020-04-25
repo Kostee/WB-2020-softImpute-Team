@@ -78,31 +78,40 @@ library(parallelMap)
 rdzenie <- parallel::detectCores()
 parallelStartMulticore(rdzenie, show.info = TRUE)
 
+
+#starttime <- Sys.time()
 #res1 <- parallelLapply(data_all, function(x){get_result(x,imputation_remove_rows)}, impute.error = function(x){'ERROR'})
 #res2 <- parallelLapply(data_all, function(x){get_result(x,imputation_mode_median)}, impute.error = function(x){'ERROR'})
 #res3 <- parallelLapply(data_all, function(x){get_result(x,imputation_fun_mice)}, impute.error = function(x){'ERROR'})
 #res4 <- parallelLapply(data_all, function(x){get_result(x,imputation_fun_missForest)}, impute.error = function(x){'ERROR'})
 #res5 <- parallelLapply(data_all, function(x){get_result(x,imputation_fun_vim)}, impute.error = function(x){'ERROR'})
-
-#starttime <- Sys.time()
 #res5 <- parallelLapply(data_all, function(x){get_result(x,imputation_fun_vim)}, impute.error = function(x){'ERROR'})
 #endtime <- Sys.time()
-#cat('done in ', endtime - starttime)
+#endtime - starttime
 
 
-saveRDS(res1, file = './part_results/res1_new.rds')
-saveRDS(res2, file = './part_results/res2_new.rds')
-# saveRDS(res3, file = './part_results/res3.rds')
-# saveRDS(res4, file = './part_results/res4.rds')
-# saveRDS(res5, file = './part_results/res5.rds')
+#saveRDS(res1, file = './part_results/res1_new.rds')
+#saveRDS(res2, file = './part_results/res2_new.rds')
+#saveRDS(res3, file = './part_results/res3_new.rds')
+#saveRDS(res4, file = './part_results/res4_new.rds')
+#saveRDS(res5, file = './part_results/res5_new.rds')
 
 
 
-# id 29 naprawione
+# old ids
 v <- c(1590,188,23381,29,38,40536,41278,56,6332)
 
+#id 29
+df29 <- read_dataset(29)
+
+# run kiedy 29 naprawione
+res29 <- parallelLapply(imputations, function(x){get_result(df29, x)}, impute.error = function(x){'ERROR'})
+
+
+# nowe zbiorki
+
 s <- c()
-for(i in 1:14L){
+for(i in 1:length(data_all)){
   s <- c(s, ! (data_all[[i]]$id %in% v))
 }
 
@@ -112,13 +121,10 @@ starttime <- Sys.time()
 nres1 <- parallelLapply(data_new[-1], function(x){get_result(x,imputation_remove_rows)}, impute.error = function(x){'ERROR'})
 nres2 <- parallelLapply(data_new, function(x){get_result(x,imputation_mode_median)}, impute.error = function(x){'ERROR'})
 nres3 <- parallelLapply(data_new, function(x){get_result(x,imputation_fun_mice)}, impute.error = function(x){'ERROR'})
-
 nres4 <- parallelLapply(data_new, function(x){get_result(x,imputation_fun_missForest)}, impute.error = function(x){'ERROR'})
 nres5 <- parallelLapply(data_new, function(x){get_result(x,imputation_fun_vim)}, impute.error = function(x){'ERROR'})
 endtime <- Sys.time()
 endtime - starttime
-
-res1 <- readRDS('./part_results/res1.rds')
 
 
 
