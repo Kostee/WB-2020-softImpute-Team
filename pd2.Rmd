@@ -287,6 +287,17 @@ Here are the results:
                round(as.numeric(results[[i]][[ds_it]]$imputation_time),3),
                round(as.numeric(results[[i]][[ds_it]]$modelling_time),3)) 
       }
+      else{ # for error input imputation name
+        if (i==3){
+          d[i,1] <- "imputation_fun_mice" 
+        }
+        if (i==4){
+          d[i,1] <- "imputation_fun_missForest" 
+        }
+        if (i==5){
+          d[i,1] <- "imputation_fun_vim" 
+        }
+      }
     }
     d
 }
