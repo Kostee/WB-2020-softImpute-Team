@@ -211,17 +211,14 @@ get_result <- function(dataset_list, imputation_fun){
   
 dataset <- dataset_list$dataset
 name_of_target <- dataset_list$target
-
 # imputation
 imputation_start = Sys.time() # start to measure time
 imputated_dataset <- imputation_fun(dataset) 
 imputation_stop = Sys.time() # end measuring time
-
 # train test split
 train_test <- train_test_split(imputated_dataset, 0.8)
 train <- as.data.table(train_test[1])
 test <- as.data.table(train_test[2])
-
 # modelling
 vars <- colnames(dataset)[colnames(dataset)!=name_of_target]
 my_formula <- as.formula(paste(name_of_target, paste(vars, collapse=" + "), sep=" ~ "))
@@ -230,26 +227,20 @@ tree_model <- rpart(formula = my_formula, data = train,
                     method = "class", control = rpart.control(cp = 0))
 y_pred <- as.data.frame(predict(tree_model, test, type = "class"))
 modelling_stop = Sys.time() # end measuring time
-
 # calculating metrics
 confusion_matrix <- get_confusion_matrix(test[[name_of_target]], y_pred[,1])
-
 accuracy_v <- accuracy(confusion_matrix)
 precision_v <- precision(confusion_matrix)
 recall_v <- recall(confusion_matrix)
 f1_v <- f1(confusion_matrix)
-
 classification_report <- data.frame(accuracy_v, precision_v,
                                     recall_v, f1_v)
 colnames(classification_report) <- c("accuracy", "precision",
                                      "recall", "f1")
-
 dataset_list$dataset <- NULL
 # in future maybe return all dataset_list ?
 # for now stick with readability
-
 imp_method_name <- deparse(substitute(imputation_fun))
-
 return(list( dataset_id = dataset_list$id, 
              imp_method = imp_method_name,
              confusion_matrix = confusion_matrix,
@@ -269,11 +260,12 @@ Here are the results:
 ```{r warning=FALSE}
   library(knitr)
   results <- c(list(0),list(0),list(0),list(0),list(0))
-  results[[1]] <- readRDS('./part_results/res1.rds')
-  results[[2]] <- readRDS('./part_results/res2.rds')
-  results[[3]] <- readRDS('./part_results/res3.rds')
-  results[[4]] <- readRDS('./part_results/res4.rds')
-  results[[5]] <- readRDS('./part_results/res5.rds')
+  results[[1]] <- readRDS('./part_results/res1_new.rds')
+  results[[2]] <- readRDS('./part_results/res2_new.rds')
+  results[[3]] <- readRDS('./part_results/res3_new.rds')
+  results[[4]] <- readRDS('./part_results/res4_new.rds')
+  results[[5]] <- readRDS('./part_results/res5_new.rds')
+  
   result_table <- function(ds_it){
     d <- data.frame(matrix(ncol = 7, nrow = 0))
     colnames(d) <- c("imputation", "accuracy", "precision", "recall", "f1", "imp_time", "mod_time")
@@ -300,9 +292,11 @@ Here are the results:
       }
     }
     d
-}
+  }
+  
+  results[[1]]
   # change i bound to number of datasets 
-  for (i in c(1,2,3,5,6,7,8,9)){
+  for (i in c(1, 2, 3, 5, 6, 7, 8, 9)){ # TUTAJ BANGLA DOPÓKI NIE WEŹMIE SIĘ KTÓREGOŚ ZE ZBIORÓW 4, 10, 11, 12, 13, 14 (czyli "nowych")
     kable(result_table(i), caption = paste("Dataset id: ", results[[1]][[i]]$dataset_id, sep = ""))
   }
   
@@ -311,13 +305,17 @@ Here are the results:
   kable(result_table(1), caption = paste("Dataset id: ", results[[1]][[1]]$dataset_id, sep = ""))
   kable(result_table(2), caption = paste("Dataset id: ", results[[1]][[2]]$dataset_id, sep = ""))
   kable(result_table(3), caption = paste("Dataset id: ", results[[1]][[3]]$dataset_id, sep = ""))
+  #kable(result_table(4), caption = paste("Dataset id: ", results[[1]][[4]]$dataset_id, sep = ""))
   kable(result_table(5), caption = paste("Dataset id: ", results[[1]][[5]]$dataset_id, sep = ""))
   kable(result_table(6), caption = paste("Dataset id: ", results[[1]][[6]]$dataset_id, sep = ""))
   kable(result_table(7), caption = paste("Dataset id: ", results[[1]][[7]]$dataset_id, sep = ""))
   kable(result_table(8), caption = paste("Dataset id: ", results[[1]][[8]]$dataset_id, sep = ""))
   kable(result_table(9), caption = paste("Dataset id: ", results[[1]][[9]]$dataset_id, sep = ""))
-  
-  
+  #kable(result_table(10), caption = paste("Dataset id: ", results[[1]][[10]]$dataset_id, sep = ""))
+  #kable(result_table(11), caption = paste("Dataset id: ", results[[1]][[11]]$dataset_id, sep = ""))
+  #kable(result_table(12), caption = paste("Dataset id: ", results[[1]][[12]]$dataset_id, sep = ""))
+  #kable(result_table(13), caption = paste("Dataset id: ", results[[1]][[13]]$dataset_id, sep = ""))
+  #kable(result_table(14), caption = paste("Dataset id: ", results[[1]][[14]]$dataset_id, sep = ""))
 ```
 
 ## Comparing imputation times
