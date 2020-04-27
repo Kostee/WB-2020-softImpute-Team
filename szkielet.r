@@ -66,8 +66,11 @@ get_result <- function(dataset_list, imputation_fun){
 data_all <- read_all_datasets()
 
 # imputations and targets preparation
-imputations <- list(imputation_fun_vim, imputation_fun_missForest,
-                    imputation_remove_rows, imputation_mode_median, imputation_fun_mice)
+imputations <- list(imputation_fun_vim,
+                    imputation_fun_missForest,
+                    imputation_remove_rows,
+                    imputation_mode_median,
+                    imputation_fun_mice)
 
 targets <- lapply(data_all, function(d){d$target})
 
@@ -84,7 +87,6 @@ parallelStartMulticore(rdzenie, show.info = TRUE)
 #res2 <- parallelLapply(data_all, function(x){get_result(x,imputation_mode_median)}, impute.error = function(x){'ERROR'})
 #res3 <- parallelLapply(data_all, function(x){get_result(x,imputation_fun_mice)}, impute.error = function(x){'ERROR'})
 #res4 <- parallelLapply(data_all, function(x){get_result(x,imputation_fun_missForest)}, impute.error = function(x){'ERROR'})
-#res5 <- parallelLapply(data_all, function(x){get_result(x,imputation_fun_vim)}, impute.error = function(x){'ERROR'})
 #res5 <- parallelLapply(data_all, function(x){get_result(x,imputation_fun_vim)}, impute.error = function(x){'ERROR'})
 #endtime <- Sys.time()
 #endtime - starttime

@@ -277,6 +277,7 @@ Here are the results:
                round(as.numeric(results[[i]][[ds_it]]$classification_report$recall),3),
                round(as.numeric(results[[i]][[ds_it]]$classification_report$f1),3),
                round(as.numeric(results[[i]][[ds_it]]$imputation_time),3),
+               # @TODO konwersja jednostek, as.numeric nie rozroznia jednostek czasu
                round(as.numeric(results[[i]][[ds_it]]$modelling_time),3)) 
       }
       else{ # for error input imputation name
@@ -296,7 +297,7 @@ Here are the results:
   
   results[[1]]
   # change i bound to number of datasets 
-  for (i in c(1, 2, 3, 5, 6, 7, 8, 9)){ # TUTAJ BANGLA DOPÓKI NIE WEŹMIE SIĘ KTÓREGOŚ ZE ZBIORÓW 4, 10, 11, 12, 13, 14 (czyli "nowych")
+  for (i in 1:length(results[[1]])){ # TUTAJ BANGLA DOPÓKI NIE WEŹMIE SIĘ KTÓREGOŚ ZE ZBIORÓW 4, 10, 11, 12, 13, 14 (czyli "nowych")
     kable(result_table(i), caption = paste("Dataset id: ", results[[2]][[i]]$dataset_id, sep = ""))
   }
   
@@ -305,7 +306,7 @@ Here are the results:
   kable(result_table(1), caption = paste("Dataset id: ", results[[2]][[1]]$dataset_id, sep = ""))
   kable(result_table(2), caption = paste("Dataset id: ", results[[2]][[2]]$dataset_id, sep = ""))
   kable(result_table(3), caption = paste("Dataset id: ", results[[2]][[3]]$dataset_id, sep = ""))
-  #kable(result_table(4), caption = paste("Dataset id: ", results[[2]][[4]]$dataset_id, sep = ""))
+  kable(result_table(4), caption = paste("Dataset id: ", results[[2]][[4]]$dataset_id, sep = ""))
   kable(result_table(5), caption = paste("Dataset id: ", results[[2]][[5]]$dataset_id, sep = ""))
   kable(result_table(6), caption = paste("Dataset id: ", results[[2]][[6]]$dataset_id, sep = ""))
   kable(result_table(7), caption = paste("Dataset id: ", results[[2]][[7]]$dataset_id, sep = ""))
