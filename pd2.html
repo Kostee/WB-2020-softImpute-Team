@@ -244,7 +244,7 @@ imputation_fun_mice &lt;- function(df){
   init &lt;- mice(df, maxit=0) 
   meth &lt;- init$method
   predM &lt;- init$predictorMatrix
-  imputed &lt;- mice(df, method=meth, predictorMatrix=predM, m=5)
+  imputed &lt;- mice(df, method=meth, predictorMatrix=predM, m=5, nnet.MaxNWts = 2500)
   completed &lt;- complete(imputed)
   return(completed)
 }
@@ -376,17 +376,14 @@ get_result &lt;- function(dataset_list, imputation_fun){
   
 dataset &lt;- dataset_list$dataset
 name_of_target &lt;- dataset_list$target
-
 # imputation
 imputation_start = Sys.time() # start to measure time
 imputated_dataset &lt;- imputation_fun(dataset) 
 imputation_stop = Sys.time() # end measuring time
-
 # train test split
 train_test &lt;- train_test_split(imputated_dataset, 0.8)
 train &lt;- as.data.table(train_test[1])
 test &lt;- as.data.table(train_test[2])
-
 # modelling
 vars &lt;- colnames(dataset)[colnames(dataset)!=name_of_target]
 my_formula &lt;- as.formula(paste(name_of_target, paste(vars, collapse=&quot; + &quot;), sep=&quot; ~ &quot;))
@@ -395,26 +392,20 @@ tree_model &lt;- rpart(formula = my_formula, data = train,
                     method = &quot;class&quot;, control = rpart.control(cp = 0))
 y_pred &lt;- as.data.frame(predict(tree_model, test, type = &quot;class&quot;))
 modelling_stop = Sys.time() # end measuring time
-
 # calculating metrics
 confusion_matrix &lt;- get_confusion_matrix(test[[name_of_target]], y_pred[,1])
-
 accuracy_v &lt;- accuracy(confusion_matrix)
 precision_v &lt;- precision(confusion_matrix)
 recall_v &lt;- recall(confusion_matrix)
 f1_v &lt;- f1(confusion_matrix)
-
 classification_report &lt;- data.frame(accuracy_v, precision_v,
                                     recall_v, f1_v)
 colnames(classification_report) &lt;- c(&quot;accuracy&quot;, &quot;precision&quot;,
                                      &quot;recall&quot;, &quot;f1&quot;)
-
 dataset_list$dataset &lt;- NULL
 # in future maybe return all dataset_list ?
 # for now stick with readability
-
 imp_method_name &lt;- deparse(substitute(imputation_fun))
-
 return(list( dataset_id = dataset_list$id, 
              imp_method = imp_method_name,
              confusion_matrix = confusion_matrix,
@@ -422,53 +413,20 @@ return(list( dataset_id = dataset_list$id,
              imputation_time = imputation_stop - imputation_start,
              modelling_time = modelling_stop - modelling_start))
 }
-data_all &lt;- read_all_datasets()</code></pre>
-<pre><code>## 'data.frame':    690 obs. of  16 variables:
-##  $ A1   : Factor w/ 2 levels &quot;b&quot;,&quot;a&quot;: 1 2 2 1 1 1 1 2 1 1 ...
-##  $ A2   : num  30.8 58.7 24.5 27.8 20.2 ...
-##  $ A3   : num  0 4.46 0.5 1.54 5.62 ...
-##  $ A4   : Factor w/ 4 levels &quot;u&quot;,&quot;y&quot;,&quot;l&quot;,&quot;t&quot;: 1 1 1 1 1 1 1 1 2 2 ...
-##  $ A5   : Factor w/ 3 levels &quot;g&quot;,&quot;p&quot;,&quot;gg&quot;: 1 1 1 1 1 1 1 1 2 2 ...
-##  $ A6   : Factor w/ 14 levels &quot;c&quot;,&quot;d&quot;,&quot;cc&quot;,&quot;i&quot;,..: 10 9 9 10 10 7 8 3 6 10 ...
-##  $ A7   : Factor w/ 9 levels &quot;v&quot;,&quot;h&quot;,&quot;bb&quot;,&quot;j&quot;,..: 1 2 2 1 1 1 2 1 2 1 ...
-##  $ A8   : num  1.25 3.04 1.5 3.75 1.71 ...
-##  $ A9   : Factor w/ 2 levels &quot;t&quot;,&quot;f&quot;: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ A10  : Factor w/ 2 levels &quot;t&quot;,&quot;f&quot;: 1 1 2 1 2 2 2 2 2 2 ...
-##  $ A11  : num  1 6 0 5 0 0 0 0 0 0 ...
-##  $ A12  : Factor w/ 2 levels &quot;t&quot;,&quot;f&quot;: 2 2 2 1 2 1 1 2 2 1 ...
-##  $ A13  : Factor w/ 3 levels &quot;g&quot;,&quot;p&quot;,&quot;s&quot;: 1 1 1 1 3 1 1 1 1 1 ...
-##  $ A14  : num  202 43 280 100 120 360 164 80 180 52 ...
-##  $ A15  : num  0 560 824 3 0 ...
-##  $ class: Factor w/ 2 levels &quot;+&quot;,&quot;-&quot;: 1 1 1 1 1 1 1 1 1 1 ...
-## 'data.frame':    690 obs. of  16 variables:
-##  $ A1   : Factor w/ 2 levels &quot;b&quot;,&quot;a&quot;: 1 2 2 1 1 1 1 2 1 1 ...
-##  $ A2   : num  30.8 58.7 24.5 27.8 20.2 ...
-##  $ A3   : num  0 4.46 0.5 1.54 5.62 ...
-##  $ A4   : Factor w/ 4 levels &quot;u&quot;,&quot;y&quot;,&quot;l&quot;,&quot;t&quot;: 1 1 1 1 1 1 1 1 2 2 ...
-##  $ A5   : Factor w/ 3 levels &quot;g&quot;,&quot;p&quot;,&quot;gg&quot;: 1 1 1 1 1 1 1 1 2 2 ...
-##  $ A6   : Factor w/ 14 levels &quot;c&quot;,&quot;d&quot;,&quot;cc&quot;,&quot;i&quot;,..: 10 9 9 10 10 7 8 3 6 10 ...
-##  $ A7   : Factor w/ 9 levels &quot;v&quot;,&quot;h&quot;,&quot;bb&quot;,&quot;j&quot;,..: 1 2 2 1 1 1 2 1 2 1 ...
-##  $ A8   : num  1.25 3.04 1.5 3.75 1.71 ...
-##  $ A9   : Factor w/ 2 levels &quot;t&quot;,&quot;f&quot;: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ A10  : Factor w/ 2 levels &quot;t&quot;,&quot;f&quot;: 1 1 2 1 2 2 2 2 2 2 ...
-##  $ A11  : num  1 6 0 5 0 0 0 0 0 0 ...
-##  $ A12  : Factor w/ 2 levels &quot;t&quot;,&quot;f&quot;: 2 2 2 1 2 1 1 2 2 1 ...
-##  $ A13  : Factor w/ 3 levels &quot;g&quot;,&quot;p&quot;,&quot;s&quot;: 1 1 1 1 3 1 1 1 1 1 ...
-##  $ A14  : num  202 43 280 100 120 360 164 80 180 52 ...
-##  $ A15  : num  0 560 824 3 0 ...
-##  $ class: Factor w/ 2 levels &quot;+&quot;,&quot;-&quot;: 1 1 1 1 1 1 1 1 1 1 ...</code></pre>
-<pre class="r"><code># imputations and targets preparation
+data_all &lt;- read_all_datasets()
+# imputations and targets preparation
 imputations &lt;- list(imputation_fun_vim, imputation_fun_missForest,
                   imputation_remove_rows, imputation_mode_median, imputation_fun_mice)
 targets &lt;- lapply(data_all, function(d){d$target})</code></pre>
 <p>Here are the results:</p>
 <pre class="r"><code>  library(knitr)
   results &lt;- c(list(0),list(0),list(0),list(0),list(0))
-  results[[1]] &lt;- readRDS('./part_results/res1.rds')
-  results[[2]] &lt;- readRDS('./part_results/res2.rds')
-  results[[3]] &lt;- readRDS('./part_results/res3.rds')
-  results[[4]] &lt;- readRDS('./part_results/res4.rds')
-  results[[5]] &lt;- readRDS('./part_results/res5.rds')
+  results[[1]] &lt;- readRDS('./part_results/res1_new.rds')
+  results[[2]] &lt;- readRDS('./part_results/res2_new.rds')
+  results[[3]] &lt;- readRDS('./part_results/res3_new.rds')
+  results[[4]] &lt;- readRDS('./part_results/res4_new.rds')
+  results[[5]] &lt;- readRDS('./part_results/res5_new.rds')
+  
   result_table &lt;- function(ds_it){
     d &lt;- data.frame(matrix(ncol = 7, nrow = 0))
     colnames(d) &lt;- c(&quot;imputation&quot;, &quot;accuracy&quot;, &quot;precision&quot;, &quot;recall&quot;, &quot;f1&quot;, &quot;imp_time&quot;, &quot;mod_time&quot;)
@@ -480,9 +438,16 @@ targets &lt;- lapply(data_all, function(d){d$target})</code></pre>
                round(as.numeric(results[[i]][[ds_it]]$classification_report$recall),3),
                round(as.numeric(results[[i]][[ds_it]]$classification_report$f1),3),
                round(as.numeric(results[[i]][[ds_it]]$imputation_time),3),
+               # @TODO konwersja jednostek, as.numeric nie rozroznia jednostek czasu
                round(as.numeric(results[[i]][[ds_it]]$modelling_time),3)) 
       }
       else{ # for error input imputation name
+        if (i==1){
+          d[i,1] &lt;- &quot;imputation_remove_rows&quot; 
+        }
+        if (i==2){
+          d[i,1] &lt;- &quot;imputation_mode_median&quot; 
+        }
         if (i==3){
           d[i,1] &lt;- &quot;imputation_fun_mice&quot; 
         }
@@ -495,15 +460,310 @@ targets &lt;- lapply(data_all, function(d){d$target})</code></pre>
       }
     }
     d
-}
-  # change i bound to number of datasets 
-  for (i in c(1,2,3,5,6,7,8,9)){
-    kable(result_table(i), caption = paste(&quot;Dataset id: &quot;, results[[1]][[i]]$dataset_id, sep = &quot;&quot;))
+  }
+  
+  results[[1]]</code></pre>
+<pre><code>## [[1]]
+## [[1]]$dataset_id
+## [1] 1590
+## 
+## [[1]]$imp_method
+## [1] &quot;imputation_remove_rows&quot;
+## 
+## [[1]]$confusion_matrix
+##        Prediction
+## Truth   &lt;=50k &gt;50k
+##   &lt;=50k  6255  582
+##   &gt;50k    817 1391
+## 
+## [[1]]$classification_report
+##    accuracy precision    recall        f1
+## 1 0.8453289 0.7050177 0.6299819 0.6653911
+## 
+## [[1]]$imputation_time
+## Time difference of 0.0208571 secs
+## 
+## [[1]]$modelling_time
+## Time difference of 1.934114 secs
+## 
+## 
+## [[2]]
+## [[2]]$dataset_id
+## [1] 188
+## 
+## [[2]]$imp_method
+## [1] &quot;imputation_remove_rows&quot;
+## 
+## [[2]]$confusion_matrix
+##      Prediction
+## Truth  1  0
+##     1 55  7
+##     0  7 59
+## 
+## [[2]]$classification_report
+##   accuracy precision    recall        f1
+## 1 0.890625 0.8939394 0.8939394 0.8939394
+## 
+## [[2]]$imputation_time
+## Time difference of 0.001743793 secs
+## 
+## [[2]]$modelling_time
+## Time difference of 0.03160548 secs
+## 
+## 
+## [[3]]
+## [[3]]$dataset_id
+## [1] 23381
+## 
+## [[3]]$imp_method
+## [1] &quot;imputation_remove_rows&quot;
+## 
+## [[3]]$confusion_matrix
+##      Prediction
+## Truth 1 2
+##     1 8 3
+##     2 3 1
+## 
+## [[3]]$classification_report
+##   accuracy precision recall   f1
+## 1      0.6      0.25   0.25 0.25
+## 
+## [[3]]$imputation_time
+## Time difference of 0.001600742 secs
+## 
+## [[3]]$modelling_time
+## Time difference of 0.02305984 secs
+## 
+## 
+## [[4]]
+## [[4]]$dataset_id
+## [1] 29
+## 
+## [[4]]$imp_method
+## [1] &quot;x&quot;
+## 
+## [[4]]$confusion_matrix
+##      Prediction
+## Truth  +  -
+##     + 54  9
+##     - 13 55
+## 
+## [[4]]$classification_report
+##    accuracy precision    recall        f1
+## 1 0.8320611  0.859375 0.8088235 0.8333333
+## 
+## [[4]]$imputation_time
+## Time difference of 0.002871037 secs
+## 
+## [[4]]$modelling_time
+## Time difference of 0.03231812 secs
+## 
+## 
+## [[5]]
+## [[5]]$dataset_id
+## [1] 38
+## 
+## [[5]]$imp_method
+## [1] &quot;imputation_remove_rows&quot;
+## 
+## [[5]]$confusion_matrix
+##           Prediction
+## Truth      negative sick
+##   negative      482    7
+##   sick            4   36
+## 
+## [[5]]$classification_report
+##   accuracy precision recall        f1
+## 1 0.979206 0.8372093    0.9 0.8674699
+## 
+## [[5]]$imputation_time
+## Time difference of 0.005114317 secs
+## 
+## [[5]]$modelling_time
+## Time difference of 0.1007841 secs
+## 
+## 
+## [[6]]
+## [[6]]$dataset_id
+## [1] 40536
+## 
+## [[6]]$imp_method
+## [1] &quot;imputation_remove_rows&quot;
+## 
+## [[6]]$confusion_matrix
+##      Prediction
+## Truth   0   1
+##     0 172   0
+##     1   0  38
+## 
+## [[6]]$classification_report
+##   accuracy precision recall f1
+## 1        1         1      1  1
+## 
+## [[6]]$imputation_time
+## Time difference of 0.02307987 secs
+## 
+## [[6]]$modelling_time
+## Time difference of 0.1365077 secs
+## 
+## 
+## [[7]]
+## [[7]]$dataset_id
+## [1] 41278
+## 
+## [[7]]$imp_method
+## [1] &quot;imputation_remove_rows&quot;
+## 
+## [[7]]$confusion_matrix
+##           Prediction
+## Truth      stem non_stem student
+##   stem       23       56       0
+##   non_stem   48      261       0
+##   student     0        0       0
+## 
+## [[7]]$classification_report
+##    accuracy precision    recall        f1
+## 1 0.7319588 0.8233438 0.8446602 0.8338658
+## 
+## [[7]]$imputation_time
+## Time difference of 0.0179255 secs
+## 
+## [[7]]$modelling_time
+## Time difference of 0.3887963 secs
+## 
+## 
+## [[8]]
+## [[8]]$dataset_id
+## [1] 56
+## 
+## [[8]]$imp_method
+## [1] &quot;imputation_remove_rows&quot;
+## 
+## [[8]]$confusion_matrix
+##             Prediction
+## Truth        democrat republican
+##   democrat         19          2
+##   republican        0         26
+## 
+## [[8]]$classification_report
+##    accuracy precision recall       f1
+## 1 0.9574468 0.9285714      1 0.962963
+## 
+## [[8]]$imputation_time
+## Time difference of 0.002642393 secs
+## 
+## [[8]]$modelling_time
+## Time difference of 0.0390048 secs
+## 
+## 
+## [[9]]
+## [[9]]$dataset_id
+## [1] 6332
+## 
+## [[9]]$imp_method
+## [1] &quot;imputation_remove_rows&quot;
+## 
+## [[9]]$confusion_matrix
+##         Prediction
+## Truth    band noband
+##   band     14      8
+##   noband    6     30
+## 
+## [[9]]$classification_report
+##    accuracy precision    recall        f1
+## 1 0.7586207 0.7894737 0.8333333 0.8108108
+## 
+## [[9]]$imputation_time
+## Time difference of 0.001601696 secs
+## 
+## [[9]]$modelling_time
+## Time difference of 0.0219481 secs
+## 
+## 
+## [[10]]
+## [1] &quot;ERROR - df puste&quot;
+## 
+## [[11]]
+## [[11]]$dataset_id
+## [1] 27
+## 
+## [[11]]$imp_method
+## [1] &quot;imputation_remove_rows&quot;
+## 
+## [[11]]$confusion_matrix
+##      Prediction
+## Truth yes no
+##   yes   8  2
+##   no    0  3
+## 
+## [[11]]$classification_report
+##    accuracy precision recall   f1
+## 1 0.8461538       0.6      1 0.75
+## 
+## [[11]]$imputation_time
+## Time difference of 0.001802683 secs
+## 
+## [[11]]$modelling_time
+## Time difference of 0.02328324 secs
+## 
+## 
+## [[12]]
+## [1] &quot;ERROR&quot;
+## 
+## [[13]]
+## [[13]]$dataset_id
+## [1] 55
+## 
+## [[13]]$imp_method
+## [1] &quot;imputation_remove_rows&quot;
+## 
+## [[13]]$confusion_matrix
+##       Prediction
+## Truth  DIE LIVE
+##   DIE    1    1
+##   LIVE   1   13
+## 
+## [[13]]$classification_report
+##   accuracy precision    recall        f1
+## 1    0.875 0.9285714 0.9285714 0.9285714
+## 
+## [[13]]$imputation_time
+## Time difference of 0.001492977 secs
+## 
+## [[13]]$modelling_time
+## Time difference of 0.0267334 secs
+## 
+## 
+## [[14]]
+## [[14]]$dataset_id
+## [1] 944
+## 
+## [[14]]$imp_method
+## [1] &quot;imputation_remove_rows&quot;
+## 
+## [[14]]$confusion_matrix
+##      Prediction
+## Truth P N
+##     P 5 1
+##     N 4 3
+## 
+## [[14]]$classification_report
+##    accuracy precision    recall        f1
+## 1 0.6153846      0.75 0.4285714 0.5454545
+## 
+## [[14]]$imputation_time
+## Time difference of 0.001177073 secs
+## 
+## [[14]]$modelling_time
+## Time difference of 0.01786256 secs</code></pre>
+<pre class="r"><code>  # change i bound to number of datasets 
+  for (i in 1:length(results[[1]])){ # TUTAJ BANGLA DOPÓKI NIE WEŹMIE SIĘ KTÓREGOŚ ZE ZBIORÓW 4, 10, 11, 12, 13, 14 (czyli &quot;nowych&quot;)
+    kable(result_table(i), caption = paste(&quot;Dataset id: &quot;, results[[2]][[i]]$dataset_id, sep = &quot;&quot;))
   }
   
   # jest taki problem że kable w pętli nie wypluwa wyniku, chyba że damy print(kable()) wtedy jednak brzydko wygląda
   
-  kable(result_table(1), caption = paste(&quot;Dataset id: &quot;, results[[1]][[1]]$dataset_id, sep = &quot;&quot;))</code></pre>
+  kable(result_table(1), caption = paste(&quot;Dataset id: &quot;, results[[2]][[1]]$dataset_id, sep = &quot;&quot;))</code></pre>
 <table>
 <caption>Dataset id: 1590</caption>
 <thead>
@@ -537,13 +797,13 @@ targets &lt;- lapply(data_all, function(d){d$target})</code></pre>
 <td align="left">2.401</td>
 </tr>
 <tr class="odd">
-<td align="left">imputation_fun_mice</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
+<td align="left">imputation_fun_missForest</td>
+<td align="left">0.854</td>
+<td align="left">0.727</td>
+<td align="left">0.625</td>
+<td align="left">0.672</td>
+<td align="left">31.604</td>
+<td align="left">1.826</td>
 </tr>
 <tr class="even">
 <td align="left">imputation_fun_missForest</td>
@@ -565,7 +825,7 @@ targets &lt;- lapply(data_all, function(d){d$target})</code></pre>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>  kable(result_table(2), caption = paste(&quot;Dataset id: &quot;, results[[1]][[2]]$dataset_id, sep = &quot;&quot;))</code></pre>
+<pre class="r"><code>  kable(result_table(2), caption = paste(&quot;Dataset id: &quot;, results[[2]][[2]]$dataset_id, sep = &quot;&quot;))</code></pre>
 <table>
 <caption>Dataset id: 188</caption>
 <thead>
@@ -599,13 +859,13 @@ targets &lt;- lapply(data_all, function(d){d$target})</code></pre>
 <td align="left">0.042</td>
 </tr>
 <tr class="odd">
-<td align="left">imputation_fun_mice</td>
-<td align="left">0.851</td>
-<td align="left">0.89</td>
-<td align="left">0.871</td>
-<td align="left">0.88</td>
-<td align="left">4.19</td>
-<td align="left">0.031</td>
+<td align="left">imputation_fun_missForest</td>
+<td align="left">0.845</td>
+<td align="left">0.838</td>
+<td align="left">0.849</td>
+<td align="left">0.844</td>
+<td align="left">21.037</td>
+<td align="left">0.046</td>
 </tr>
 <tr class="even">
 <td align="left">imputation_fun_missForest</td>
@@ -627,7 +887,7 @@ targets &lt;- lapply(data_all, function(d){d$target})</code></pre>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>  kable(result_table(3), caption = paste(&quot;Dataset id: &quot;, results[[1]][[3]]$dataset_id, sep = &quot;&quot;))</code></pre>
+<pre class="r"><code>  kable(result_table(3), caption = paste(&quot;Dataset id: &quot;, results[[2]][[3]]$dataset_id, sep = &quot;&quot;))</code></pre>
 <table>
 <caption>Dataset id: 23381</caption>
 <thead>
@@ -661,13 +921,13 @@ targets &lt;- lapply(data_all, function(d){d$target})</code></pre>
 <td align="left">0.04</td>
 </tr>
 <tr class="odd">
-<td align="left">imputation_fun_mice</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
+<td align="left">imputation_fun_missForest</td>
+<td align="left">0.6</td>
+<td align="left">0.545</td>
+<td align="left">0.419</td>
+<td align="left">0.474</td>
+<td align="left">8.726</td>
+<td align="left">0.026</td>
 </tr>
 <tr class="even">
 <td align="left">imputation_fun_missForest</td>
@@ -689,7 +949,69 @@ targets &lt;- lapply(data_all, function(d){d$target})</code></pre>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>  kable(result_table(5), caption = paste(&quot;Dataset id: &quot;, results[[1]][[5]]$dataset_id, sep = &quot;&quot;))</code></pre>
+<pre class="r"><code>  kable(result_table(4), caption = paste(&quot;Dataset id: &quot;, results[[2]][[4]]$dataset_id, sep = &quot;&quot;))</code></pre>
+<table>
+<caption>Dataset id: 29</caption>
+<thead>
+<tr class="header">
+<th align="left">imputation</th>
+<th align="left">accuracy</th>
+<th align="left">precision</th>
+<th align="left">recall</th>
+<th align="left">f1</th>
+<th align="left">imp_time</th>
+<th align="left">mod_time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">x</td>
+<td align="left">0.832</td>
+<td align="left">0.859</td>
+<td align="left">0.809</td>
+<td align="left">0.833</td>
+<td align="left">0.003</td>
+<td align="left">0.032</td>
+</tr>
+<tr class="even">
+<td align="left">x</td>
+<td align="left">0.79</td>
+<td align="left">0.754</td>
+<td align="left">0.79</td>
+<td align="left">0.772</td>
+<td align="left">0.006</td>
+<td align="left">0.047</td>
+</tr>
+<tr class="odd">
+<td align="left">x</td>
+<td align="left">0.826</td>
+<td align="left">0.797</td>
+<td align="left">0.868</td>
+<td align="left">0.831</td>
+<td align="left">30.992</td>
+<td align="left">0.019</td>
+</tr>
+<tr class="even">
+<td align="left">x</td>
+<td align="left">0.812</td>
+<td align="left">0.877</td>
+<td align="left">0.816</td>
+<td align="left">0.845</td>
+<td align="left">6.339</td>
+<td align="left">0.019</td>
+</tr>
+<tr class="odd">
+<td align="left">x</td>
+<td align="left">0.812</td>
+<td align="left">0.797</td>
+<td align="left">0.843</td>
+<td align="left">0.819</td>
+<td align="left">0.245</td>
+<td align="left">0.023</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>  kable(result_table(5), caption = paste(&quot;Dataset id: &quot;, results[[2]][[5]]$dataset_id, sep = &quot;&quot;))</code></pre>
 <table>
 <caption>Dataset id: 38</caption>
 <thead>
@@ -723,13 +1045,13 @@ targets &lt;- lapply(data_all, function(d){d$target})</code></pre>
 <td align="left">0.13</td>
 </tr>
 <tr class="odd">
-<td align="left">imputation_fun_mice</td>
-<td align="left">0.979</td>
-<td align="left">0.822</td>
-<td align="left">0.822</td>
-<td align="left">0.822</td>
-<td align="left">18.565</td>
-<td align="left">0.14</td>
+<td align="left">imputation_fun_missForest</td>
+<td align="left">0.991</td>
+<td align="left">0.872</td>
+<td align="left">0.976</td>
+<td align="left">0.921</td>
+<td align="left">13.56</td>
+<td align="left">0.157</td>
 </tr>
 <tr class="even">
 <td align="left">imputation_fun_missForest</td>
@@ -751,7 +1073,7 @@ targets &lt;- lapply(data_all, function(d){d$target})</code></pre>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>  kable(result_table(6), caption = paste(&quot;Dataset id: &quot;, results[[1]][[6]]$dataset_id, sep = &quot;&quot;))</code></pre>
+<pre class="r"><code>  kable(result_table(6), caption = paste(&quot;Dataset id: &quot;, results[[2]][[6]]$dataset_id, sep = &quot;&quot;))</code></pre>
 <table>
 <caption>Dataset id: 40536</caption>
 <thead>
@@ -813,7 +1135,7 @@ targets &lt;- lapply(data_all, function(d){d$target})</code></pre>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>  kable(result_table(7), caption = paste(&quot;Dataset id: &quot;, results[[1]][[7]]$dataset_id, sep = &quot;&quot;))</code></pre>
+<pre class="r"><code>  kable(result_table(7), caption = paste(&quot;Dataset id: &quot;, results[[2]][[7]]$dataset_id, sep = &quot;&quot;))</code></pre>
 <table>
 <caption>Dataset id: 41278</caption>
 <thead>
@@ -875,7 +1197,7 @@ targets &lt;- lapply(data_all, function(d){d$target})</code></pre>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>  kable(result_table(8), caption = paste(&quot;Dataset id: &quot;, results[[1]][[8]]$dataset_id, sep = &quot;&quot;))</code></pre>
+<pre class="r"><code>  kable(result_table(8), caption = paste(&quot;Dataset id: &quot;, results[[2]][[8]]$dataset_id, sep = &quot;&quot;))</code></pre>
 <table>
 <caption>Dataset id: 56</caption>
 <thead>
@@ -909,13 +1231,13 @@ targets &lt;- lapply(data_all, function(d){d$target})</code></pre>
 <td align="left">0.039</td>
 </tr>
 <tr class="odd">
-<td align="left">imputation_fun_mice</td>
-<td align="left">0.943</td>
-<td align="left">0.861</td>
+<td align="left">imputation_fun_missForest</td>
+<td align="left">0.954</td>
+<td align="left">0.889</td>
 <td align="left">1</td>
-<td align="left">0.925</td>
-<td align="left">7.85</td>
-<td align="left">0.073</td>
+<td align="left">0.941</td>
+<td align="left">4.895</td>
+<td align="left">0.071</td>
 </tr>
 <tr class="even">
 <td align="left">imputation_fun_missForest</td>
@@ -937,7 +1259,7 @@ targets &lt;- lapply(data_all, function(d){d$target})</code></pre>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>  kable(result_table(9), caption = paste(&quot;Dataset id: &quot;, results[[1]][[9]]$dataset_id, sep = &quot;&quot;))</code></pre>
+<pre class="r"><code>  kable(result_table(9), caption = paste(&quot;Dataset id: &quot;, results[[2]][[9]]$dataset_id, sep = &quot;&quot;))</code></pre>
 <table>
 <caption>Dataset id: 6332</caption>
 <thead>
@@ -996,6 +1318,316 @@ targets &lt;- lapply(data_all, function(d){d$target})</code></pre>
 <td align="left">0.811</td>
 <td align="left">1.669</td>
 <td align="left">0.034</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>  kable(result_table(10), caption = paste(&quot;Dataset id: &quot;, results[[2]][[10]]$dataset_id, sep = &quot;&quot;))</code></pre>
+<table>
+<caption>Dataset id: 1018</caption>
+<thead>
+<tr class="header">
+<th align="left">imputation</th>
+<th align="left">accuracy</th>
+<th align="left">precision</th>
+<th align="left">recall</th>
+<th align="left">f1</th>
+<th align="left">imp_time</th>
+<th align="left">mod_time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">imputation_remove_rows</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">imputation_mode_median</td>
+<td align="left">0.921</td>
+<td align="left">0.258</td>
+<td align="left">0.237</td>
+<td align="left">0.247</td>
+<td align="left">0.022</td>
+<td align="left">0.548</td>
+</tr>
+<tr class="odd">
+<td align="left">imputation_fun_missForest</td>
+<td align="left">0.921</td>
+<td align="left">0.3</td>
+<td align="left">0.26</td>
+<td align="left">0.278</td>
+<td align="left">13.022</td>
+<td align="left">0.946</td>
+</tr>
+<tr class="even">
+<td align="left">imputation_fun_missForest</td>
+<td align="left">0.921</td>
+<td align="left">0.3</td>
+<td align="left">0.26</td>
+<td align="left">0.278</td>
+<td align="left">13.022</td>
+<td align="left">0.946</td>
+</tr>
+<tr class="odd">
+<td align="left">imputation_fun_vim</td>
+<td align="left">0.927</td>
+<td align="left">0.377</td>
+<td align="left">0.23</td>
+<td align="left">0.286</td>
+<td align="left">8.554</td>
+<td align="left">0.635</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>  kable(result_table(11), caption = paste(&quot;Dataset id: &quot;, results[[2]][[11]]$dataset_id, sep = &quot;&quot;))</code></pre>
+<table>
+<caption>Dataset id: 27</caption>
+<thead>
+<tr class="header">
+<th align="left">imputation</th>
+<th align="left">accuracy</th>
+<th align="left">precision</th>
+<th align="left">recall</th>
+<th align="left">f1</th>
+<th align="left">imp_time</th>
+<th align="left">mod_time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">imputation_remove_rows</td>
+<td align="left">0.846</td>
+<td align="left">0.6</td>
+<td align="left">1</td>
+<td align="left">0.75</td>
+<td align="left">0.002</td>
+<td align="left">0.023</td>
+</tr>
+<tr class="even">
+<td align="left">imputation_mode_median</td>
+<td align="left">0.811</td>
+<td align="left">0.676</td>
+<td align="left">0.926</td>
+<td align="left">0.781</td>
+<td align="left">0.008</td>
+<td align="left">0.04</td>
+</tr>
+<tr class="odd">
+<td align="left">imputation_fun_missForest</td>
+<td align="left">0.892</td>
+<td align="left">0.917</td>
+<td align="left">0.786</td>
+<td align="left">0.846</td>
+<td align="left">7.957</td>
+<td align="left">0.015</td>
+</tr>
+<tr class="even">
+<td align="left">imputation_fun_missForest</td>
+<td align="left">0.892</td>
+<td align="left">0.917</td>
+<td align="left">0.786</td>
+<td align="left">0.846</td>
+<td align="left">7.957</td>
+<td align="left">0.015</td>
+</tr>
+<tr class="odd">
+<td align="left">imputation_fun_vim</td>
+<td align="left">0.865</td>
+<td align="left">0.955</td>
+<td align="left">0.7</td>
+<td align="left">0.808</td>
+<td align="left">2.143</td>
+<td align="left">0.034</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>  kable(result_table(12), caption = paste(&quot;Dataset id: &quot;, results[[2]][[12]]$dataset_id, sep = &quot;&quot;))</code></pre>
+<table>
+<caption>Dataset id: 4</caption>
+<thead>
+<tr class="header">
+<th align="left">imputation</th>
+<th align="left">accuracy</th>
+<th align="left">precision</th>
+<th align="left">recall</th>
+<th align="left">f1</th>
+<th align="left">imp_time</th>
+<th align="left">mod_time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">imputation_remove_rows</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">imputation_mode_median</td>
+<td align="left">0.667</td>
+<td align="left">0.571</td>
+<td align="left">0.8</td>
+<td align="left">0.667</td>
+<td align="left">0.009</td>
+<td align="left">0.031</td>
+</tr>
+<tr class="odd">
+<td align="left">imputation_fun_missForest</td>
+<td align="left">0.917</td>
+<td align="left">0.875</td>
+<td align="left">1</td>
+<td align="left">0.933</td>
+<td align="left">1.074</td>
+<td align="left">0.014</td>
+</tr>
+<tr class="even">
+<td align="left">imputation_fun_missForest</td>
+<td align="left">0.917</td>
+<td align="left">0.875</td>
+<td align="left">1</td>
+<td align="left">0.933</td>
+<td align="left">1.074</td>
+<td align="left">0.014</td>
+</tr>
+<tr class="odd">
+<td align="left">imputation_fun_vim</td>
+<td align="left">0.75</td>
+<td align="left">0.833</td>
+<td align="left">0.714</td>
+<td align="left">0.769</td>
+<td align="left">0.755</td>
+<td align="left">0.038</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>  kable(result_table(13), caption = paste(&quot;Dataset id: &quot;, results[[2]][[13]]$dataset_id, sep = &quot;&quot;))</code></pre>
+<table>
+<caption>Dataset id: 55</caption>
+<thead>
+<tr class="header">
+<th align="left">imputation</th>
+<th align="left">accuracy</th>
+<th align="left">precision</th>
+<th align="left">recall</th>
+<th align="left">f1</th>
+<th align="left">imp_time</th>
+<th align="left">mod_time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">imputation_remove_rows</td>
+<td align="left">0.875</td>
+<td align="left">0.929</td>
+<td align="left">0.929</td>
+<td align="left">0.929</td>
+<td align="left">0.001</td>
+<td align="left">0.027</td>
+</tr>
+<tr class="even">
+<td align="left">imputation_mode_median</td>
+<td align="left">0.839</td>
+<td align="left">0.96</td>
+<td align="left">0.857</td>
+<td align="left">0.906</td>
+<td align="left">0.008</td>
+<td align="left">0.034</td>
+</tr>
+<tr class="odd">
+<td align="left">imputation_fun_missForest</td>
+<td align="left">0.871</td>
+<td align="left">0.862</td>
+<td align="left">1</td>
+<td align="left">0.926</td>
+<td align="left">2.084</td>
+<td align="left">0.012</td>
+</tr>
+<tr class="even">
+<td align="left">imputation_fun_missForest</td>
+<td align="left">0.871</td>
+<td align="left">0.862</td>
+<td align="left">1</td>
+<td align="left">0.926</td>
+<td align="left">2.084</td>
+<td align="left">0.012</td>
+</tr>
+<tr class="odd">
+<td align="left">imputation_fun_vim</td>
+<td align="left">0.903</td>
+<td align="left">0.929</td>
+<td align="left">0.963</td>
+<td align="left">0.945</td>
+<td align="left">0.616</td>
+<td align="left">0.04</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>  kable(result_table(14), caption = paste(&quot;Dataset id: &quot;, results[[2]][[14]]$dataset_id, sep = &quot;&quot;))</code></pre>
+<table>
+<caption>Dataset id: 944</caption>
+<thead>
+<tr class="header">
+<th align="left">imputation</th>
+<th align="left">accuracy</th>
+<th align="left">precision</th>
+<th align="left">recall</th>
+<th align="left">f1</th>
+<th align="left">imp_time</th>
+<th align="left">mod_time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">imputation_remove_rows</td>
+<td align="left">0.615</td>
+<td align="left">0.75</td>
+<td align="left">0.429</td>
+<td align="left">0.545</td>
+<td align="left">0.001</td>
+<td align="left">0.018</td>
+</tr>
+<tr class="even">
+<td align="left">imputation_mode_median</td>
+<td align="left">0.846</td>
+<td align="left">1</td>
+<td align="left">0.714</td>
+<td align="left">0.833</td>
+<td align="left">0.005</td>
+<td align="left">0.027</td>
+</tr>
+<tr class="odd">
+<td align="left">imputation_fun_missForest</td>
+<td align="left">0.692</td>
+<td align="left">0.846</td>
+<td align="left">0.647</td>
+<td align="left">0.733</td>
+<td align="left">1.129</td>
+<td align="left">0.013</td>
+</tr>
+<tr class="even">
+<td align="left">imputation_fun_missForest</td>
+<td align="left">0.692</td>
+<td align="left">0.846</td>
+<td align="left">0.647</td>
+<td align="left">0.733</td>
+<td align="left">1.129</td>
+<td align="left">0.013</td>
+</tr>
+<tr class="odd">
+<td align="left">imputation_fun_vim</td>
+<td align="left">0.731</td>
+<td align="left">0.667</td>
+<td align="left">0.833</td>
+<td align="left">0.741</td>
+<td align="left">0.31</td>
+<td align="left">0.03</td>
 </tr>
 </tbody>
 </table>

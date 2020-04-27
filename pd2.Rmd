@@ -64,7 +64,7 @@ imputation_fun_mice <- function(df){
   init <- mice(df, maxit=0) 
   meth <- init$method
   predM <- init$predictorMatrix
-  imputed <- mice(df, method=meth, predictorMatrix=predM, m=5)
+  imputed <- mice(df, method=meth, predictorMatrix=predM, m=5, nnet.MaxNWts = 2500)
   completed <- complete(imputed)
   return(completed)
 }
@@ -281,6 +281,12 @@ Here are the results:
                round(as.numeric(results[[i]][[ds_it]]$modelling_time),3)) 
       }
       else{ # for error input imputation name
+        if (i==1){
+          d[i,1] <- "imputation_remove_rows" 
+        }
+        if (i==2){
+          d[i,1] <- "imputation_mode_median" 
+        }
         if (i==3){
           d[i,1] <- "imputation_fun_mice" 
         }
