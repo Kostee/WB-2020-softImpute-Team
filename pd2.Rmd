@@ -24,7 +24,7 @@ We'll look at the two simple imputation methods with the following short marking
 1. *I1* / *modeMedian* - missing data supplemented with medians from individual columns
 2. *I2* / *removeRows* - all the rows with any nonexistent values removed
 
-```{r imputation_basic_functions}
+```{r imputation_basic_functions, cache = TRUE}
 imputation_mode_median <- function(df){
   
   Mode <- function(x) {
@@ -58,13 +58,13 @@ imputation_remove_rows <- function(df){
 4. *I4* - *vim*
 5. *I5* - *missForest*
 
-```{r imputation_advanced_functions, message = FALSE, warning = FALSE}
+```{r imputation_advanced_functions, message = FALSE, warning = FALSE, cache = TRUE}
 library(mice)
 imputation_fun_mice <- function(df){
   init <- mice(df, maxit=0) 
   meth <- init$method
   predM <- init$predictorMatrix
-  imputed <- mice(df, method=meth, predictorMatrix=predM, m=5, nnet.MaxNWts = 2500)
+  imputed <- mice(df, method=meth, predictorMatrix=predM, m=5)
   completed <- complete(imputed)
   return(completed)
 }
@@ -97,7 +97,7 @@ The eight data frames on which we will test these above were taken from **OpenML
 
 Those above have been placed in individual directories identified by id in the prepared directory.
 
-```{r read_dataset}
+```{r read_dataset, cache = TRUE}
 DFT_REPO_DATASET_DIR = './dependencies/datasets'
 read_dataset <- function(openml_id, dataset_dir = DFT_REPO_DATASET_DIR){
   
@@ -129,7 +129,7 @@ read_dataset <- function(openml_id, dataset_dir = DFT_REPO_DATASET_DIR){
 
 In order to read all the eight datasets we will use other function, which will return a dataframe containing all the important informations about the test matrices.
 
-```{r read_all_datasets}
+```{r read_all_datasets, cache = TRUE}
 read_all_datasets <- function(dataset_dir = DFT_REPO_DATASET_DIR){
   
   if (!dir.exists(dataset_dir)){
@@ -150,7 +150,7 @@ read_all_datasets <- function(dataset_dir = DFT_REPO_DATASET_DIR){
 
 In order to test the same test-train splits we'll use one random seed 1357 for all datasets.
 
-```{r train_test_split}
+```{r train_test_split, cache = TRUE}
 set.seed(1357)
 train_test_split <- function(dataset, train_size){
   smp_size <- floor(train_size * nrow(dataset))
@@ -172,7 +172,7 @@ For each machine learning model after every imputation we will get the confusion
 * *recall* - $\frac{TP}{TP+FN}$
 * *f1* - $2*\frac{Recall * Precision}{Recall + Precision}$
 
-```{r metrics}
+```{r metrics, cache = TRUE}
 get_confusion_matrix <- function(test, pred){
   return (table(Truth = test, Prediction = pred))
 }
@@ -205,7 +205,7 @@ f1 <- function(confusion_matrix){
 
 ## Imputation results
 
-```{r get_result_function, warning = FALSE, message = FALSE}
+```{r get_result_function, warning = FALSE, message = FALSE, cache = TRUE}
 library(rpart)
 get_result <- function(dataset_list, imputation_fun){
   
@@ -257,7 +257,7 @@ targets <- lapply(data_all, function(d){d$target})
 
 Here are the results:
 
-```{r warning=FALSE}
+```{r warning=FALSE, cache = TRUE}
   library(knitr)
   results <- c(list(0),list(0),list(0),list(0),list(0))
   results[[1]] <- readRDS('./part_results/res1_new.rds')
@@ -281,12 +281,6 @@ Here are the results:
                round(as.numeric(results[[i]][[ds_it]]$modelling_time),3)) 
       }
       else{ # for error input imputation name
-        if (i==1){
-          d[i,1] <- "imputation_remove_rows" 
-        }
-        if (i==2){
-          d[i,1] <- "imputation_mode_median" 
-        }
         if (i==3){
           d[i,1] <- "imputation_fun_mice" 
         }
@@ -298,12 +292,11 @@ Here are the results:
         }
       }
     }
-    d
   }
   
   results[[1]]
   # change i bound to number of datasets 
-  for (i in 1:length(results[[1]])){ # TUTAJ BANGLA DOPÓKI NIE WEŹMIE SIĘ KTÓREGOŚ ZE ZBIORÓW 4, 10, 11, 12, 13, 14 (czyli "nowych")
+  for (i in 1:length(results[[1]])){
     kable(result_table(i), caption = paste("Dataset id: ", results[[2]][[i]]$dataset_id, sep = ""))
   }
   
@@ -326,6 +319,61 @@ Here are the results:
 ```
 
 ## Comparing imputation times
+
+```{r imputation_times_counting, cache = TRUE}
+ndatasets <- length(results[[1]])
+nimputations <- length(imputations)
+imputation_names <- c("remove", "median", "mice", "missForest", "VIM")
+dataset_ids <- rep(NULL, ndatasets)
+for(i in 1:ndatasets){
+  dataset_ids[i] <- results[[2]][[i]]$dataset_id
+}
+
+imputation_times <- data.frame(rep(0, 14))
+for (imputation_id in 1:nimputations){
+  imp_id_times <- rep(NULL, ndatasets)
+  
+  for(dataset_id in 1:ndatasets){
+    if("imputation_time" %in% names(results[[imputation_id]][[dataset_id]])){
+      imp_time <- results[[imputation_id]][[dataset_id]]$imputation_time
+      imp_time <- as.numeric(imp_time, units="secs")
+      imp_id_times[dataset_id] <- imp_time
+    }
+  }
+  imputation_times <- cbind(imputation_times, imp_id_times)
+}
+
+imputation_times[1] <- dataset_ids
+colnames(imputation_times) <- c("dataset_id", imputation_names)
+imputation_times$dataset_id <- as.factor(imputation_times$dataset_id)
+knitr::kable(imputation_times)
+```
+
+```{r imputation_times_plot}
+library(ggplot2)
+
+colors <- c("remove" = "orange", "median" = "cyan", "mice" = "green",
+            "missForest" = "red", "VIM" = "blue")
+
+require(scales)
+ggplot(data = imputation_times, aes(x = dataset_id)) +
+  geom_point(aes(y = remove), color = colors[1], size = 2, shape = 18) +
+  geom_point(aes(y = median), color = colors[2], size = 2, shape = 16) +
+  geom_point(aes(y = mice), color = colors[3], size = 2, shape = 15) +
+  geom_point(aes(y = missForest), color = colors[4], size = 2, shape = 17) +
+  geom_point(aes(y = VIM), color = colors[5], size = 2, shape = 19) +
+  ggtitle("Datasets' imputations times") +
+  theme_gray() +
+  scale_y_continuous(trans = log2_trans(),
+    breaks = trans_breaks("log2", function(x) 2^x),
+    labels = trans_format("log2", math_format(2^.x))) +
+  labs(x = "Dataset Id",
+       y = "Imputation time [in seconds]",
+       color = "Legend") +
+  scale_color_manual(name = ":-)", values = colors) +
+  theme(legend.position="right",
+        plot.title = element_text(hjust = 0.5))
+```
 
 TODO:
 1. weź w ramkę danych czasy imputacji po zbiorach (x - id zbioru, y - czas imputacji)
