@@ -354,14 +354,20 @@ library(ggplot2)
 
 colors <- c("remove" = "orange", "median" = "cyan", "mice" = "green",
             "missForest" = "red", "VIM" = "blue")
+imptimes <- melt(imputation_times)
 
 require(scales)
-ggplot(data = imputation_times, aes(x = dataset_id)) +
-  geom_point(aes(y = remove), color = colors[1], size = 2, shape = 18) +
-  geom_point(aes(y = median), color = colors[2], size = 2, shape = 16) +
-  geom_point(aes(y = mice), color = colors[3], size = 2, shape = 15) +
-  geom_point(aes(y = missForest), color = colors[4], size = 2, shape = 17) +
-  geom_point(aes(y = VIM), color = colors[5], size = 2, shape = 19) +
+
+# żeby połączyć kolory i shape w legendzie zobacz
+# https://stackoverflow.com/questions/12410908/combine-legends-for-color-and-shape-into-a-single-legend
+
+ggplot(data=imptimes, aes(x = dataset_id, y = value, color = variable, shape = variable)) + geom_point() + 
+#ggplot(data = imputation_times, aes(x = dataset_id, y )) +
+  #geom_point(aes(y = remove), color = colors[1], size = 2, shape = 18) +
+  #geom_point(aes(y = median), color = colors[2], size = 2, shape = 16) +
+  #geom_point(aes(y = mice), color = colors[3], size = 2, shape = 15) +
+  #geom_point(aes(y = missForest), color = colors[4], size = 2, shape = 17) +
+  #geom_point(aes(y = VIM), color = colors[5], size = 2, shape = 19) +
   ggtitle("Datasets' imputations times") +
   theme_gray() +
   scale_y_continuous(trans = log2_trans(),
