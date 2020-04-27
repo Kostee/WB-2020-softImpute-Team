@@ -259,7 +259,7 @@ Here are the results:
 
 ```{r warning=FALSE, cache = TRUE}
   library(knitr)
-  results <- c(list(0),list(0),list(0),list(0),list(0))
+  results <- rep(list(0), 5)
   results[[1]] <- readRDS('./part_results/res1_new.rds')
   results[[2]] <- readRDS('./part_results/res2_new.rds')
   results[[3]] <- readRDS('./part_results/res3_new.rds')
@@ -292,15 +292,13 @@ Here are the results:
         }
       }
     }
+    d
   }
   
-  results[[1]]
   # change i bound to number of datasets 
-  for (i in 1:length(results[[1]])){
-    kable(result_table(i), caption = paste("Dataset id: ", results[[2]][[i]]$dataset_id, sep = ""))
-  }
-  
-  # jest taki problem że kable w pętli nie wypluwa wyniku, chyba że damy print(kable()) wtedy jednak brzydko wygląda
+  #for (i in 1:length(results[[1]])){ # won't use it, because the output looks bad
+  #  kable(result_table(i), caption = paste("Dataset id: ", results[[2]][[i]]$dataset_id, sep = ""))
+  #}
   
   kable(result_table(1), caption = paste("Dataset id: ", results[[2]][[1]]$dataset_id, sep = ""))
   kable(result_table(2), caption = paste("Dataset id: ", results[[2]][[2]]$dataset_id, sep = ""))
@@ -319,6 +317,8 @@ Here are the results:
 ```
 
 ## Comparing imputation times
+
+Let's build a dataframe containing information about imputation methods.
 
 ```{r imputation_times_counting, cache = TRUE}
 ndatasets <- length(results[[1]])
@@ -349,18 +349,21 @@ imputation_times$dataset_id <- as.factor(imputation_times$dataset_id)
 knitr::kable(imputation_times)
 ```
 
-```{r imputation_times_plot}
+Looks good! Now it's visualization time.
+
+```{r imputation_times_plot, message = FALSE, warning = FALSE, cache = TRUE}
 library(ggplot2)
+# install.packages("reshape") # if not installed
+library(reshape)
+
+# in order to connect colors and shapes in legend see:
+# https://stackoverflow.com/questions/12410908/combine-legends-for-color-and-shape-into-a-single-legend
 
 colors <- c("remove" = "orange", "median" = "cyan", "mice" = "green",
             "missForest" = "red", "VIM" = "blue")
 imptimes <- melt(imputation_times)
 
 require(scales)
-
-# żeby połączyć kolory i shape w legendzie zobacz
-# https://stackoverflow.com/questions/12410908/combine-legends-for-color-and-shape-into-a-single-legend
-
 ggplot(data=imptimes, aes(x = dataset_id, y = value, color = variable, shape = variable)) + geom_point() + 
 #ggplot(data = imputation_times, aes(x = dataset_id, y )) +
   #geom_point(aes(y = remove), color = colors[1], size = 2, shape = 18) +
@@ -376,16 +379,63 @@ ggplot(data=imptimes, aes(x = dataset_id, y = value, color = variable, shape = v
   labs(x = "Dataset Id",
        y = "Imputation time [in seconds]",
        color = "Legend") +
-  scale_color_manual(name = ":-)", values = colors) +
+  scale_color_manual(name = "imputation name", values = colors) +
   theme(legend.position="right",
         plot.title = element_text(hjust = 0.5))
 ```
 
-TODO:
-1. weź w ramkę danych czasy imputacji po zbiorach (x - id zbioru, y - czas imputacji)
-2. Zrób z tego ggplota z wykresem liniowym (jakiś ładny theme, title, itp. of course)
-3. Wysnuj wnioski o najszybszych i najwolniejszych imputacjach
+Judging by the logarithmic scale, no surprise removing rows and median replenishment are definetely the fastest methods, with removing rows being several times faster. Looking at more advanced ones, definetely *VIM* rules - probably usually something like 5-10 times faster than *mice* and *missForest*. These last two are quite slow, with the missforest appearing to be slightly faster.
 
+What do the numbers say?
+
+```{r imputation_times_measures, cache = TRUE}
+means <- rep(NA, nimputations)
+medians <- rep(NA, nimputations)
+stDeviations <- rep(NA, nimputations)
+
+for(i in (1:nimputations)){
+  means[i] <- mean(imputation_times[imputation_names[i]][!is.na(imputation_times[imputation_names[i]])])
+  means[i] <- round(means[i], 3)
+  medians[i] <- median(imputation_times[imputation_names[i]][!is.na(imputation_times[imputation_names[i]])])
+  medians[i] <- round(medians[i], 3)
+  stDeviations[i] <- sd(imputation_times[imputation_names[i]][!is.na(imputation_times[imputation_names[i]])])
+  stDeviations[i] <- round(stDeviations[i], 3)
+}
+
+imputation_times_measures <- data.frame(imputation_names, means, medians, stDeviations)
+knitr::kable(imputation_times_measures)
+```
+
+Taking into acount all the imputations which have been implemented, we can clearly see that two easy ones really stand out. However, we cannot fully compare the other three - due to the fact that missForest failed on three data sets, and mice - up to seven.
+
+Considering such a large spread of data size, it is very interesting difference between the median and the average for VIM - the first is almost seven minutes, the second - barely one and a half seconds. In general, however, it is certainly much longer than methods for removing incomplete rows and filling with median.
+
+Let's count these four measures again, but only for those datasats for which all imputations were successful - these are ids 27, 38, 55, 56, 944, 188  (dataset with id 4 softened on removing rows containing any missing items, because each of its poems had some missing items).
+
+```{r imputation_times_measures_little, cache = TRUE}
+dataset_ids_fullimp <- c(2, 5, 8, 11, 13, 14)
+ndatasets_fullimp <- length(dataset_ids_fullimp)
+
+means <- rep(NA, nimputations)
+medians <- rep(NA, nimputations)
+stDeviations <- rep(NA, nimputations)
+
+for(i in 1:nimputations){
+  means[i] <- mean(imputation_times[imputation_names[i]][dataset_ids_fullimp,])
+  means[i] <- round(means[i], 3)
+  medians[i] <- median(imputation_times[imputation_names[i]][dataset_ids_fullimp,])
+  medians[i] <- round(medians[i], 3)
+  stDeviations[i] <- sd(imputation_times[imputation_names[i]][dataset_ids_fullimp,])
+  stDeviations[i] <- round(stDeviations[i], 3)
+}
+
+imputation_times_measures_fullimp <- data.frame(imputation_names, means, medians, stDeviations)
+knitr::kable(imputation_times_measures_fullimp)
+```
+
+Now we have better results to compare. Taking into account the mean time, definetely *missForest* is the slowest, but also its standard deviaton is incomparably huge - this is probably due to the fact that for smaller sets it is doing well, but due to its complexity, its slowdown can be seen for very large datasets. As shown in the chart, *VIM* is definitely better for quick calculations than *missForest* and *mice*, and considering the median, *mice* is comparable to *missForest* - so you can expect that for small data sets there is not much difference between them, and a lot of time we definitely need to devote to these larger data frames.
+
+###########################################3
 
 facet?
 x - id zbioru, y - czas imputacji, z - procent braków
