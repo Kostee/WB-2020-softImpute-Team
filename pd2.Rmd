@@ -156,7 +156,6 @@ read_all_datasets <- function(dataset_dir = DFT_REPO_DATASET_DIR){
 All of datasets contain missing information denoted as NA and differ in size, number of features, number of observations and percentage of missing data. Table below decribes those informations.
 
 ```{r dataset description, message = FALSE, warning=FALSE, cache = TRUE}
-### TU KOD HANI BEDZIE DO WKLEJENIA 
 
 dfs <- read_all_datasets()
 
@@ -298,7 +297,7 @@ imputations <- list(imputation_fun_vim, imputation_fun_missForest,
 targets <- lapply(data_all, function(d){d$target})
 ```
 
-Here are the results:
+Here are the results. NA indicates that method returned error:
 
 ```{r warning=FALSE, cache = TRUE}
   library(knitr)
@@ -419,7 +418,15 @@ ggplot(data=imptimes, aes(x = dataset_id, y = value, color = variable, shape = v
        color = "Legend") +
   scale_color_manual(name = "imputation name", values = colors) +
   theme(legend.position="right",
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5)) +
+  #scale_colour_manual(name = "Treatment & State",
+  #                    labels = c("Control, Non-F", "Control, Flwr", "Exclosure, Non-F", "Exclosure, Flwr"),
+  #                    values = c("blue", "red", "blue", "red")) +   
+  scale_shape_manual(name = "imputation name",
+                     values = 15:19L)
+
+
+
 ```
 
 Judging by the logarithmic scale, no surprise removing rows and median replenishment are definitely the fastest methods, with removing rows being several times faster. Looking at more advanced ones, definitely *VIM* rules - probably usually something like 5-10 times faster than *mice* and *missForest*. These last two are quite slow, with the missforest appearing to be slightly faster.
