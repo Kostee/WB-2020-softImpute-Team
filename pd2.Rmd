@@ -22,8 +22,8 @@ In this document we will try to find one objectively the finest imputation metho
 
 We'll look at the two simple imputation methods with the following short markings:
 
-1. *I1* / *modeMedian* - missing data supplemented with medians from individual columns
-2. *I2* / *removeRows* - all the rows with any nonexistent values removed
+1. *modeMedian* - missing data supplemented with medians from individual columns
+2. *removeRows* - all the rows with any nonexistent values removed
 
 ```{r imputation_basic_functions, cache = TRUE}
 imputation_mode_median <- function(df){
@@ -55,9 +55,9 @@ imputation_remove_rows <- function(df){
 
 ... and also three more advanced algorithms from popular libraries:
 
-3. *I3* - *mice*
-4. *I4* - *vim*
-5. *I5* - *missForest*
+3. *mice* - standard imputation with *maxit* parameter of value 0 and default 5 number of imputed datasets
+4. *I4* - *vim* - default *kNN* implementation
+5. *I5* - *missForest* - simple imputation offered by the package
 
 ```{r imputation_advanced_functions, message = FALSE, warning = FALSE, cache = TRUE}
 library(mice)
@@ -101,9 +101,6 @@ The eight data frames on which we will test these above were taken from **OpenML
 * 4 - *labor*
 * 55 - *hepatitis*
 * 944 - *echoMonths*
-
-
-
 
 Those above have been placed in individual directories identified by id in the prepared directory.
 
@@ -182,6 +179,8 @@ For each machine learning model after every imputation we will get the confusion
 * *recall* - $\frac{TP}{TP+FN}$
 * *f1* - $2*\frac{Recall * Precision}{Recall + Precision}$
 
+These four will give us good information about the quality of imputation and give us a good comparison. We get simple and clear information about which observations are well classified, which ones are wrong and how they should be. Considering the number of sets to consider and their different properties, even when it comes to balancing, comparing these four measures, the fact that it will show the pros and cons of given imputations, will additionally be good to compare them.
+
 ```{r metrics, cache = TRUE}
 get_confusion_matrix <- function(test, pred){
   return (table(Truth = test, Prediction = pred))
@@ -214,6 +213,8 @@ f1 <- function(confusion_matrix){
 ```
 
 ## Imputation results
+
+The results of our work will be checked using the implemented classification tree algorithm from the *rpart* package. We have chosen this algorithm because this classifier works well for almost any type of data - and for the most part numerical, and for the most part factors, it can handle and make a good model. The use of an algorithm using, for example, the distance from the nearest points or separating sets by clusters would not be recommended for each data frame, and given the diversity, here rpast should do a good job.
 
 ```{r get_result_function, warning = FALSE, message = FALSE, cache = TRUE}
 library(rpart)
