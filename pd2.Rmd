@@ -9,7 +9,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
 ```
 
 ## Abstract
@@ -155,10 +155,33 @@ read_all_datasets <- function(dataset_dir = DFT_REPO_DATASET_DIR){
 
 All of datasets contain missing information denoted as NA and differ in size, number of features, number of observations and percentage of missing data. Table below decribes those informations.
 
-```{r}
-### TU KOD HANI BEDZIE DO WKLEJENIA
+```{r dataset description, message = FALSE, warning=FALSE, cache = TRUE}
+### TU KOD HANI BEDZIE DO WKLEJENIA 
 
 dfs <- read_all_datasets()
+
+ids <- lapply(dfs, function(x){x$id})
+names <- lapply(dfs, function(x){x$data_name})
+n_inst <- lapply(dfs, function(x){x$number_of_instances})
+n_features <- lapply(dfs, function(x){x$number_of_features})
+number_of_numeric_features <- lapply(dfs, function(x){x$number_of_numeric_features})
+number_of_categorical_features <- lapply(dfs, function(x){x$number_of_categorical_features})
+number_of_missings <- lapply(dfs, function(x){x$number_of_missings})
+proc_missing <- lapply(dfs, function(x){x$number_of_missing/(x$number_of_instances * x$number_of_features)})
+number_of_instances_with_missings <- lapply(dfs, function(x){x$number_of_instances_with_missings})
+number_of_features_with_missings <- lapply(dfs, function(x){x$number_of_features_with_missings})
+
+#fix wrong json
+names[[10]] <- "okcupid-stem"
+
+table <- data.frame("id" = unlist(ids), 
+                    "name" = unlist(names),
+                    "number_of_instances" = unlist(n_inst),
+                    "number_of_features" = unlist(n_features),
+                    "number_of_missing" = unlist(number_of_missings),
+                    "procentage_of_missing" = round(unlist(proc_missing)*100,2))
+
+knitr::kable(table)
 ```
 
 
