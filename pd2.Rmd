@@ -14,9 +14,9 @@ knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
 
 ## Abstract
 
-Choosing the best-suited imputation is the daily dilemma of every data scientist. Some of they believe the crux lies in the most advanced and sophisticated, the others trust the simplest of all possible.
+Choosing the best-suited imputation is the daily dilemma of every data scientist. Some of them believe the crux lies in the most advanced and sophisticated, the others trust the simplest of all possible.
 
-In this document we will try to find one objectively the finest imputation method by testing five of popular ones on eight specially selected data sets prepared for these operations.
+In this document we will try to find the one, objectively finest imputation method by testing five of popular ones on forteen specially selected data sets prepared for these operations.
 
 ## Imputation functions
 
@@ -55,9 +55,9 @@ imputation_remove_rows <- function(df){
 
 ... and also three more advanced algorithms from popular libraries:
 
-3. *mice* - standard imputation with *maxit* parameter of value 0 and default 5 number of imputed datasets
-4. *I4* - *vim* - default *kNN* implementation
-5. *I5* - *missForest* - simple imputation offered by the package
+3. *mice* ^1^ - standard imputation with *maxit* parameter of value 0 and default 5 number of imputed datasets
+4. *VIM* ^2^ - default *kNN* implementation
+5. *missForest* ^3^ - simple imputation offered by the package
 
 ```{r imputation_advanced_functions, message = FALSE, warning = FALSE, cache = TRUE}
 library(mice)
@@ -134,7 +134,7 @@ read_dataset <- function(openml_id, dataset_dir = DFT_REPO_DATASET_DIR){
 }
 ```
 
-In order to read all datasets we will use other function, which will return a dataframe containing all the important informations about the test matrices.
+In order to read all datasets we will use another function, which will return a dataframe containing all the important informations about the test matrices.
 
 ```{r read_all_datasets, cache = TRUE}
 read_all_datasets <- function(dataset_dir = DFT_REPO_DATASET_DIR){
@@ -245,7 +245,7 @@ f1 <- function(confusion_matrix){
 
 ## Imputation results
 
-The results of our work will be checked using the implemented classification tree algorithm from the *rpart* package. We have chosen this algorithm because this classifier works well for almost any type of data - and for the most part numerical, and for the most part factors, it can handle and make a good model. The use of an algorithm using, for example, the distance from the nearest points or separating sets by clusters would not be recommended for each data frame, and given the diversity, here rpart should do a good job.
+The results of our work will be checked using the implemented classification tree algorithm from the *rpart ^4^* package. We have chosen this algorithm because this classifier works well for almost any type of data - and for the most part numerical, and for the most part factors, it can handle and make a decent model. The use of an algorithm using, for example, the distance from the nearest points or separating sets by clusters would not be recommended for each data frame, and given the diversity, here rpart should do a good job.
 
 ```{r get_result_function, warning = FALSE, message = FALSE, cache = TRUE}
 library(rpart)
@@ -253,14 +253,16 @@ get_result <- function(dataset_list, imputation_fun){
   
 dataset <- dataset_list$dataset
 name_of_target <- dataset_list$target
-# imputation
-imputation_start = Sys.time() # start to measure time
-imputated_dataset <- imputation_fun(dataset) 
-imputation_stop = Sys.time() # end measuring time
 # train test split
 train_test <- train_test_split(imputated_dataset, 0.8)
 train <- as.data.table(train_test[1])
 test <- as.data.table(train_test[2])
+# imputation
+imputation_start = Sys.time() # start to measure time
+train <- imputation_fun(train)
+test <- imputation_fun(test)
+imputation_stop = Sys.time() # end measuring time
+imputed_dataset <- cbind(train, test)
 # modelling
 vars <- colnames(dataset)[colnames(dataset)!=name_of_target]
 my_formula <- as.formula(paste(name_of_target, paste(vars, collapse=" + "), sep=" ~ "))
@@ -297,6 +299,7 @@ imputations <- list(imputation_fun_vim, imputation_fun_missForest,
 targets <- lapply(data_all, function(d){d$target})
 ```
 
+Also, it is worth mentioning that removing rows computes a different dataset compared to other techniques. Because of that one needs to be cautious while analysing and comparing remove_rows to other imputation methods. For one's own research it is probably worth replacing removing rows with removing columns for datasets with few features containing missing values. 
 Here are the results. NA indicates that method returned error:
 
 ```{r warning=FALSE, cache = TRUE}
@@ -953,3 +956,13 @@ Looking at the results, *VIM* and *missForest* give quite similar numbers in ter
 ## Conclusion
 
 The experiment can be considered successful when it comes to the datasets and tools made available to us - calculated measures, visualizations made, as well as conclusions led us, among others, to the intuition that probably *VIM* is really a very good package, supplementing the missing values with medians from columns is not at all is such a stupid idea as it may seem, and *mice* can be thrown in the bin. Unfortunately, it is impossible to draw a wise conclusion based on such a small number of tested data - admittedly as many as 14 sets, problems with imputations on some of them or too small dataframes not giving a satisfactory answer and assumptions that respectful statistics would praise. Nevertheless, above code is certainly very valuable and for more data sets it could confirm one or another belief - therefore we can probably say that we have achieved scientific success!
+
+### References
+
+*^1^mice: Multivariate Imputation by Chained Equations, package created by Stef van Buuren, Karin Groothuis-Oudshoorn, Gerko Vink, Rianne Schouten, Alexander Robitzsch, Lisa Doove, Shahab Jolani, Margarita Moreno-Betancur, Ian White, Philipp Gaffert, Florian Meinfelder, Bernie Gray*
+
+*^2^VIM: Visualization and Imputation of Missing Values, package created by Matthias Templ, Alexander Kowarik, Andreas Alfons, Bernd Prantner*
+
+*^3^missForest: Nonparametric Missing Value Imputation using Random Forest Daniel J. Stekhoven*
+
+*^4^rpart: Recursive Partitioning and Regression Trees, package by Terry Therneau, Beth Atkinson, Brian Ripley*
