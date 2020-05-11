@@ -4,13 +4,6 @@ source('./imputations_wrapped_functions.r')
 source('./metrics_functions.r')
 source('./reading_datasets_functions.r')
 
-library(parallelMap)
-library(microbenchmark)
-
-if(!dir.exists('./times')){
-  dir.create("./times")
-}
-
 if(!dir.exists('./imputed')){
   dir.create("./imputed")
 }
