@@ -1,4 +1,5 @@
 DFT_REPO_DATASET_DIR = './dependencies/datasets'
+DFT_REPO_IMPED_DATASET_DIR = './imputed'
 getwd()
 
 #' Reads dataset based on id from directory
@@ -64,3 +65,40 @@ read_all_datasets <- function(dataset_dir = DFT_REPO_DATASET_DIR){
   datasets_combined <- t(datasets_combined)
   return(unname(t(datasets_combined)))
 }
+
+read_imputed_dataset <- function(id, method,  dataset_dir=  DFT_REPO_IMPED_DATASET_DIR){
+  
+  if(! is.character(method)){
+    method <- deparse(substitute(imputation_fun))
+  }
+  
+  dir <- paste0(DFT_REPO_IMPED_DATASET_DIR, '/', method, "/", id, ".rds")
+  
+  if(!dir.exists(paste0(DFT_REPO_IMPED_DATASET_DIR, '/', method))){
+    stop(paste(dir, 'does not exist' ))
+  }
+  
+  readRDS(dir)
+}
+
+read_imputed_dataset(188, "imputation_fun_vim")
+
+read_all_imputed_datasets <- function(dataset_dir=  DFT_REPO_IMPED_DATASET_DIR){
+
+  out <- list()
+  for(m in dir(dataset_dir)){
+    d <- paste0(dataset_dir, "/", m)
+    if(!dir.exists(d)){
+      stop(paste(dir, 'does not exist'))
+    }
+    ids <- dir(d)
+    
+    ids <- sapply(ids, function(x){substr(x,1,nchar(x) -4)}, simplify = TRUE)
+    dfs <- lapply(ids, read_imputed_dataset, method = m)
+    names(dfs) <- paste(m, ids, sep = "_")
+    out  <- c(out, dfs)
+  }
+  return(out)
+}
+
+#read_all_imputed_datasets() -> x
