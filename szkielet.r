@@ -40,9 +40,11 @@ get_result <- function(dataset_list, modelling_fun){
   # for now stick with readability
   
   imp_method_name <- deparse(substitute(imputation_fun))
+  modelling_fun_name <- deparse(substitute(modelling_fun))
   
   return(list( dataset_id = dataset_list$id, 
                imp_method = dataset_list$imp_method,
+               mod_mehtod = modelling_fun_name,
                confusion_matrix = confusion_matrix,
                classification_report = classification_report,
                imputation_time = dataset_list$imp_time))
