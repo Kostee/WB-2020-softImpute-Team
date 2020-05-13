@@ -18,7 +18,7 @@ train_and_predict_fun_rpart <- function(train, test, name_of_target){
 }
 
 
-get_result <- function(dataset_list, imputation_fun, modelling_fun){
+get_result <- function(dataset_list, modelling_fun){
   
   imputated_dataset <- dataset_list$dataset
   name_of_target <- dataset_list$target
@@ -30,7 +30,7 @@ get_result <- function(dataset_list, imputation_fun, modelling_fun){
   
   # modelling
   
-  y_pred <- train_and_predict_fun_rpart(train, test, name_of_target)
+  y_pred <- modelling_fun(train, test, name_of_target)
   
   # calculating metrics
   confusion_matrix <- get_confusion_matrix(test[[name_of_target]], y_pred[,1])
@@ -52,13 +52,11 @@ get_result <- function(dataset_list, imputation_fun, modelling_fun){
   imp_method_name <- deparse(substitute(imputation_fun))
   
   return(list( dataset_id = dataset_list$id, 
-               imp_method = imp_method_name,
+               imp_method = dataset_list$imp_method,
                confusion_matrix = confusion_matrix,
                classification_report = classification_report,
                imputation_time = dataset_list$imp_time))
 }
-
-# example: get_result(data_all[[1]], imputation_remove_rows)
 
 
 
@@ -67,4 +65,4 @@ data_all <- read_all_imputed_datasets()
 
 df <- data_all[[1]]
 
-get_result(df, train_and_predict_fun_rpart)
+get_result(df, train_and_predict_fun_rpart) -> wynik
