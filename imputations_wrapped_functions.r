@@ -31,6 +31,7 @@ imputation_remove_rows <- function(df){
 imputation_mode_median <- function(df){
   
   Mode <- function(x) {
+    x <- x[!is.na(x)]
     ux <- unique(x)
     ux[which.max(tabulate(match(x, ux)))]
   }
