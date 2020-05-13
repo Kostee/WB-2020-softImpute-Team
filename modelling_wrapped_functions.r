@@ -27,7 +27,9 @@ train_and_predict_fun_bayes <- function(train, test, name_of_target){
 }
 
 train_and_predict_fun_svm <- function(train, test, name_of_target){
-  model <- svm(Species ~ ., data = train)
-  pred <- predict(model, test)
+  vars <- colnames(train)[colnames(train)!=name_of_target]
+  my_formula <- as.formula(paste(name_of_target, paste(vars, collapse=" + "), sep=" ~ "))
+  model <- svm(my_formula, data = train)
+  y_pred <- predict(model, test)
   return(y_pred)
 }
