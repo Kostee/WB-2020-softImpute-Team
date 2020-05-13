@@ -3,19 +3,9 @@
 set.seed(123)
 
 source('./imputations_wrapped_functions.r')
+source('./modelling_wrapped_functions.r')
 source('./metrics_functions.r')
 source('./reading_datasets_functions.r')
-
-library(rpart) # for classification tree
-
-train_and_predict_fun_rpart <- function(train, test, name_of_target){
-  vars <- colnames(train)[colnames(train)!=name_of_target]
-  my_formula <- as.formula(paste(name_of_target, paste(vars, collapse=" + "), sep=" ~ "))
-  tree_model <- rpart(formula = my_formula, data = train,
-                      method = "class", control = rpart.control(cp = 0))
-  y_pred <- as.data.frame(predict(tree_model, test, type = "class"))
-  return(y_pred)
-}
 
 
 get_result <- function(dataset_list, modelling_fun){
@@ -33,7 +23,7 @@ get_result <- function(dataset_list, modelling_fun){
   y_pred <- modelling_fun(train, test, name_of_target)
   
   # calculating metrics
-  confusion_matrix <- get_confusion_matrix(test[[name_of_target]], y_pred[,1])
+  confusion_matrix <- get_confusion_matrix(test[[name_of_target]], y_pred)
 
   accuracy_v <- accuracy(confusion_matrix)
   precision_v <- precision(confusion_matrix)
