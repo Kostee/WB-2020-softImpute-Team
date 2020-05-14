@@ -50,3 +50,17 @@ f1 <- function(confusion_matrix){
   prec <- precision(confusion_matrix)
   return(2 * (rec * prec) / (rec + prec))
 }
+
+mcc <- function(confusion_matrix){
+  conf_matrix <- confusion_matrix_values(confusion_matrix)
+  up <- conf_matrix[1]*conf_matrix[2]-conf_matrix[3]*conf_matrix[4]
+  down <- (conf_matrix[1]+conf_matrix[3])*(conf_matrix[1]+conf_matrix[4])*(conf_matrix[2]+conf_matrix[3])*(conf_matrix[2]+conf_matrix[4])
+  return(up/sqrt(down))
+}
+
+#TEST
+#train <- read.csv("test_datasets/train_basic.csv")
+#test <- read.csv("test_datasets/test_basic.csv")
+#conff <- get_confusion_matrix(test$is_good_customer_type, train_and_predict_fun_svm(train, test, "is_good_customer_type"))
+#conff
+#mcc(conff)

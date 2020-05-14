@@ -9,7 +9,7 @@ train_and_predict_fun_rpart <- function(train, test, name_of_target){
 }
 
 
-library(class) # nie działa dla faktorów, może się naprawi jeśli będziemy chcieć knn
+library(class)
 train_and_predict_fun_knn <- function(train, test, name_of_target){
   train[[name_of_target]] <- as.factor(train[[name_of_target]])
   test[[name_of_target]] <- as.factor(test[[name_of_target]])
@@ -51,8 +51,8 @@ train_and_predict_fun_svm <- function(train, test, name_of_target){
 }
 
 #TEST:
-#train <- read.csv("train_basic.csv")
-#test <- read.csv("test_basic.csv")
+#train <- read.csv("test_datasets/train_basic.csv")
+#test <- read.csv("test_datasets/test_basic.csv")
 #train_and_predict_fun_rpart(train, test, "is_good_customer_type")
 #train_and_predict_fun_knn(train, test, "is_good_customer_type")
 #train_and_predict_fun_bayes(train, test, "is_good_customer_type")
