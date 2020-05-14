@@ -50,7 +50,8 @@ imputations <- list(imputation_fun_vim,
                     imputation_fun_missForest,
                     imputation_remove_rows,
                     imputation_mode_median,
-                    imputation_fun_mice)
+                    imputation_fun_mice,
+                    imputation_random)
 
 starttime <- Sys.time()
 parallelLapply(data_all, function(x){save_imputed_datasets(x,imputation_remove_rows)}, impute.error = function(x){'ERROR'})
@@ -58,6 +59,7 @@ parallelLapply(data_all, function(x){save_imputed_datasets(x,imputation_mode_med
 parallelLapply(data_all, function(x){save_imputed_datasets(x,imputation_fun_mice)}, impute.error = function(x){'ERROR'})
 parallelLapply(data_all, function(x){save_imputed_datasets(x,imputation_fun_missForest)}, impute.error = function(x){'ERROR'})
 parallelLapply(data_all, function(x){save_imputed_datasets(x,imputation_fun_vim)}, impute.error = function(x){'ERROR'})
+parallelLapply(data_all, function(x){save_imputed_datasets(x,imputation_random)}, impute.error = function(x){'ERROR'})
 endtime <- Sys.time()
 endtime - starttime
 
