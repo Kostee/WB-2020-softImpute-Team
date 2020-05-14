@@ -1,13 +1,28 @@
 imputed_data <- read_all_imputed_datasets()
 
+for(i in 1:61){
+  if (imputed_data[[i]]$imp_method == "imputation_mode_median"){
+    imputed_data[[i]]$dataset <- imputation_mode_median(imputed_data[[i]]$dataset)
+  }
+}
+
+
+
 final_results <- vector(mode = "list", length = 5)
 i1 <- 1
 i2 <- 1
 i3 <- 1
 i4 <- 1
 i5 <- 1
-
-for (i in 1:2){
+# 3 - zawiera NA
+# 29 - Error: cannot allocate vector of size 2.1 Gb 
+# 35 - R session aborted
+# 43 - Error: cannot allocate vector of size 2.1 Gb 
+# 48 - Error in 1:numclass : result would be too long a vector
+# 49 - R session aborted
+# 55 - Error in 1:numclass : result would be too long a vector 
+c(1,2,4:28)
+for (i in c(1:2, 4:28, 30:34, 36:42, 44:47, 50:54, 56:61)){
   print(i)
   if (imputed_data[[i]]$imp_method == "imputation_remove_rows"){
     result <- get_result(imputed_data[[i]], train_and_predict_fun_rpart)
@@ -57,11 +72,20 @@ for (i in 1:2){
     result <- get_result(imputed_data[[i]], train_and_predict_fun_rpart)
     final_results[[5]][[i5]] <- result
     result <- get_result(imputed_data[[i]], train_and_predict_fun_bayes)
-    final_results[[5]][[i5]] <- result
+    final_results[[5]][[i5+1]] <- result
     result <- get_result(imputed_data[[i]], train_and_predict_fun_ranger)
-    final_results[[5]][[i5]] <- result
+    final_results[[5]][[i5+2]] <- result
     result <- get_result(imputed_data[[i]], train_and_predict_fun_svm)
-    final_results[[5]][[i5]] <- result
+    final_results[[5]][[i5+3]] <- result
     i5 <- i5+4
   }
 }
+
+saveRDS(final_results, "final_results.RDS")
+
+final <- readRDS("final_results.RDS")
+final[[1]][[2]]
+
+
+
+
