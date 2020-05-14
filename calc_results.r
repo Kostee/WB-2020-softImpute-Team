@@ -17,10 +17,13 @@ i6 <- 1
 # 48 - Error in 1:numclass : result would be too long a vector
 # 49 - R session aborted
 # 55 - Error in 1:numclass : result would be too long a vector
+
+# 57 - blad w confusion_matrix subsript out of boud; train_and_predict_fun_bayes
 c(1,2,4:28)
-for (i in c(1:2, 4:28, 30:34, 36:42, 44:47, 50:54, 56:61)){
+#for (i in c(1:2, 4:28, 30:34, 36:42, 44:47, 50:54, 56:75)){
+for (i in c(58:61)){
   print(i)
-  
+  if(imputed_data[[i]]$dataset %>% is.na %>% any){next}
   if (imputed_data[[i]]$imp_method == "imputation_remove_rows"){
     result <- get_result(imputed_data[[i]], train_and_predict_fun_rpart)
     final_results[[1]][[i1]] <- result

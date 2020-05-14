@@ -17,6 +17,18 @@ train_test_split <- function(dataset, train_size){
 
 # METRICS FUNCTIONS
 
+#library(mltools)
+mcc_wrap <- function(confusion_matrix){
+  v <- confusion_matrix_values(confusion_matrix)
+  TP <- v[1]
+  TN <- v[2]
+  FP <- v[3]
+  FN <- v[4]
+  
+  mltools::mcc(TP=TP, TN=TN, FP = FP, FN=FN)
+}
+
+
 get_confusion_matrix <- function(test, pred){
   return (table(Truth = test, Prediction = pred))
 }

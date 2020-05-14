@@ -7,6 +7,7 @@ source('./modelling_wrapped_functions.r')
 source('./metrics_functions.r')
 source('./reading_datasets_functions.r')
 
+library(varhandle)
 
 get_result <- function(dataset_list, modelling_fun){
   
@@ -20,10 +21,20 @@ get_result <- function(dataset_list, modelling_fun){
   
   # modelling
   
-  y_pred <- modelling_fun(train, test, name_of_target)
+  y_pred_raw <- modelling_fun(train, test, name_of_target)
+  if( ( is.factor(y_pred_raw) & all(check.numeric(y_pred_raw)) | is.numeric(y_pred_raw) )) {
+    y_pred_raw <- as.numeric(as.character(y_pred_raw))
+    y_pred <- round(y_pred_raw)
+  } else {
+    y_pred <- y_pred_raw
+  }
   
   # calculating metrics
   confusion_matrix <- get_confusion_matrix(test[[name_of_target]], y_pred)
+  
+  
+  
+  mcc <- mcc_wrap(confusion_matrix)
   
   accuracy_v <- accuracy(confusion_matrix)
   precision_v <- precision(confusion_matrix)
@@ -31,9 +42,9 @@ get_result <- function(dataset_list, modelling_fun){
   f1_v <- f1(confusion_matrix)
   
   classification_report <- data.frame(accuracy_v, precision_v,
-                                      recall_v, f1_v)
+                                      recall_v, f1_v, mcc)
   colnames(classification_report) <- c("accuracy", "precision",
-                                       "recall", "f1")
+                                       "recall", "f1", "mcc")
   
   dataset_list$dataset <- NULL
   # in future maybe return all dataset_list ?
@@ -48,7 +59,7 @@ get_result <- function(dataset_list, modelling_fun){
                confusion_matrix = confusion_matrix,
                classification_report = classification_report,
                imputation_time = dataset_list$imp_time, 
-               raw = y_pred,
+               raw = y_pred_raw,
                true = test[[name_of_target]]))
 }
 
