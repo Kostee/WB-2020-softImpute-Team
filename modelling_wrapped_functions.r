@@ -10,11 +10,21 @@ train_and_predict_fun_rpart <- function(train, test, name_of_target){
 
 
 library(class)
+library(caret)
+library(magrittr)
 train_and_predict_fun_knn <- function(train, test, name_of_target){
   train[[name_of_target]] <- as.factor(train[[name_of_target]])
+  cl_ <- as.factor(train[[name_of_target]])
   test[[name_of_target]] <- as.factor(test[[name_of_target]])
   col_id <- -which(names(train) %in% c(name_of_target))
-  y_pred <- knn(train[,col_id], test[,col_id], train[[name_of_target]])
+  
+  train_ <- as.data.frame(train)[,col_id] %>% dummyVars(" ~ .", data = .)
+  train_ <- data.frame(predict(train_, newdata = as.data.frame(train)[,col_id]))
+  
+  test_ <- as.data.frame(test)[,col_id] %>% dummyVars(" ~ .", data = .)
+  test_ <- data.frame(predict(test_, newdata = as.data.frame(test)[,col_id]))
+  
+  y_pred <- knn(train_, test_, cl_)
   return(y_pred)
 }
 
@@ -51,8 +61,8 @@ train_and_predict_fun_svm <- function(train, test, name_of_target){
 }
 
 #TEST:
-#train <- read.csv("test_datasets/train_basic.csv")
-#test <- read.csv("test_datasets/test_basic.csv")
+train <- read.csv("test_datasets/train_basic.csv")
+test <- read.csv("test_datasets/test_basic.csv")
 #train_and_predict_fun_rpart(train, test, "is_good_customer_type")
 #train_and_predict_fun_knn(train, test, "is_good_customer_type")
 #train_and_predict_fun_bayes(train, test, "is_good_customer_type")
