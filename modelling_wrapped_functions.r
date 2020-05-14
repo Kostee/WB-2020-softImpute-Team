@@ -51,8 +51,8 @@ train_and_predict_fun_svm <- function(train, test, name_of_target){
 }
 
 #TEST:
-#train <- read.csv("train.csv")
-#test <- read.csv("test.csv")
+#train <- read.csv("train_basic.csv")
+#test <- read.csv("test_basic.csv")
 #train_and_predict_fun_rpart(train, test, "is_good_customer_type")
 #train_and_predict_fun_knn(train, test, "is_good_customer_type")
 #train_and_predict_fun_bayes(train, test, "is_good_customer_type")
