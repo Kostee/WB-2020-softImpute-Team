@@ -50,8 +50,7 @@ imputations <- list(imputation_fun_vim,
                     imputation_fun_missForest,
                     imputation_remove_rows,
                     imputation_mode_median,
-                    imputation_fun_mice,
-                    imputation_random)
+                    imputation_fun_mice)
 
 starttime <- Sys.time()
 parallelLapply(data_all, function(x){save_imputed_datasets(x,imputation_remove_rows)}, impute.error = function(x){'ERROR'})

@@ -1,13 +1,7 @@
 source("reading_datasets_functions.r")
 imputed_data <- read_all_imputed_datasets()
 
-for(i in 1:61){
-  if (imputed_data[[i]]$imp_method == "imputation_mode_median"){
-    imputed_data[[i]]$dataset <- imputation_mode_median(imputed_data[[i]]$dataset)
-  }
-}
-
-
+source('./szkielet.r')
 
 final_results <- vector(mode = "list", length = 5)
 i1 <- 1
