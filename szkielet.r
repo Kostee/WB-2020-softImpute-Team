@@ -24,7 +24,7 @@ get_result <- function(dataset_list, modelling_fun){
   
   # calculating metrics
   confusion_matrix <- get_confusion_matrix(test[[name_of_target]], y_pred)
-
+  
   accuracy_v <- accuracy(confusion_matrix)
   precision_v <- precision(confusion_matrix)
   recall_v <- recall(confusion_matrix)
@@ -47,7 +47,9 @@ get_result <- function(dataset_list, modelling_fun){
                mod_mehtod = modelling_fun_name,
                confusion_matrix = confusion_matrix,
                classification_report = classification_report,
-               imputation_time = dataset_list$imp_time))
+               imputation_time = dataset_list$imp_time, 
+               raw = y_pred,
+               true = test[[name_of_target]]))
 }
 
 
