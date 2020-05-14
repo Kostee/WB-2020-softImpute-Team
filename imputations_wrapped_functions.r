@@ -51,3 +51,27 @@ imputation_mode_median <- function(df){
   
   return(df)
 }
+
+imputation_random <- function(df){
+  set.seed(6134)
+  nrows <- nrow(df[1])
+  new_df <- df
+  
+  for(column in colnames(df)){
+    for(row in (1:nrows)){
+      if(is.na(df[row, column])){
+        random_row = sample(1:nrows, 1)
+        while(is.na(df[random_row, column])){
+          random_row = sample(1:nrows, 1)
+        }
+        new_df[row, column] <- df[random_row, column]
+      }
+    }
+  }
+  
+  return(new_df)
+}
+# imputation_random test
+# df <- data.frame(c(1, 2, NA, 55), c(2, 4, 5, 44), c(2, NA, 6, NA), c(NA, "brum", "wrum", "haha"))
+# df
+# imputation_random(df)
