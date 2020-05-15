@@ -32,14 +32,13 @@ get_result <- function(dataset_list, modelling_fun){
   # calculating metrics
   confusion_matrix <- get_confusion_matrix(test[[name_of_target]], y_pred)
   
-  
-  
-  mcc <- mcc_wrap(confusion_matrix)
-  
-  accuracy_v <- accuracy(confusion_matrix)
-  precision_v <- precision(confusion_matrix)
-  recall_v <- recall(confusion_matrix)
-  f1_v <- f1(confusion_matrix)
+  #mcc <- mcc_wrap(confusion_matrix)
+  mcc <- mltools::mcc(preds = as.vector(y_pred_raw), actuals = as.vector(as.double(test[[name_of_target]])))
+
+  accuracy_v <- MLmetrics::Accuracy(y_pred_raw, test[[name_of_target]])
+  precision_v <- MLmetrics::Precision(y_pred_raw, test[[name_of_target]])
+  recall_v <- MLmetrics::Recall(y_pred_raw, test[[name_of_target]])
+  f1_v <- MLmetrics::F1_Score(y_pred_raw, test[[name_of_target]])
   
   classification_report <- data.frame(accuracy_v, precision_v,
                                       recall_v, f1_v, mcc)
