@@ -35,8 +35,8 @@ train_and_predict_fun_bayes <- function(train, test, name_of_target){
   vars <- colnames(train)[colnames(train)!=name_of_target]
   my_formula <- as.formula(paste(name_of_target, paste(vars, collapse=" + "), sep=" ~ "))
   NBclassfier=naiveBayes(my_formula, data=train)
-  y_pred=predict(NBclassfier, newdata=test, type="raw")
-  return(y_pred[,1])
+  y_pred=predict(NBclassfier, newdata=test)
+  return(y_pred)
 }
 
 library(ranger)
@@ -45,8 +45,8 @@ train_and_predict_fun_ranger <- function(train, test, name_of_target){
   test[[name_of_target]] <- as.factor(test[[name_of_target]])
   vars <- colnames(train)[colnames(train)!=name_of_target]
   my_formula <- as.formula(paste(name_of_target, paste(vars, collapse=" + "), sep=" ~ "))
-  rg <- ranger(my_formula, data = train, probability = TRUE)
-  y_pred <- predict(rg, data = test)$predictions[,1]
+  rg <- ranger(my_formula, data = train)
+  y_pred <- predict(rg, data = test)$predictions
   return(y_pred)
 }
 
@@ -55,8 +55,8 @@ train_and_predict_fun_svm <- function(train, test, name_of_target){
   test[[name_of_target]] <- as.factor(test[[name_of_target]])
   vars <- colnames(train)[colnames(train)!=name_of_target]
   my_formula <- as.formula(paste(name_of_target, paste(vars, collapse=" + "), sep=" ~ "))
-  model <- svm(my_formula, data = train, probability = TRUE)
-  y_pred <- predict(model, test, probability = TRUE)
+  model <- svm(my_formula, data = train)
+  y_pred <- predict(model, test)
   return(y_pred)
 }
 
