@@ -30,7 +30,7 @@ ggplot(data = df, aes(x = imputation, y = time, color = imputation)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   scale_y_continuous(trans = log2_trans(),
                      breaks = trans_breaks("log2", function(x) 2^x),
-                     labels = trans_format("log2", math_format(2^.x))) # + 
-  labs(x = "Dataset Id",
+                     labels = trans_format("log2", math_format(2^.x)))  + 
+  labs(x = "Imputation method",
        y = "Imputation time [in seconds]",
        color = "Legend") 
