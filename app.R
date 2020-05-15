@@ -1,5 +1,5 @@
 library(shiny)
-
+library(magrittr)
 final_results <- readRDS('./final_results.RDS')
 f <- unlist(final_results, recursive = FALSE)
 
