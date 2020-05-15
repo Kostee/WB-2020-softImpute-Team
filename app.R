@@ -37,6 +37,7 @@ ui <- fluidPage(
 
         # Show a plot of the generated distribution
         mainPanel(
+            textOutput("cmt"),
            tableOutput("cm"),
            tableOutput("cr"),
            plotOutput("roc"),
@@ -58,10 +59,14 @@ server <- function(input, output, session) {
     
     require(PRROC)
     
+    output$cmt <- renderText("Confusion matrix")
+    
     output$cm <- renderTable({
         x <- l()
-        x$confusion_matrix
-    })
+        x$confusion_matrix %>% as.matrix()
+        as.data.frame.matrix(prop.table(x$confusion_matrix))
+    
+        }, rownames = T)
     
     output$cr <- renderTable({
         x <- l()
@@ -70,20 +75,27 @@ server <- function(input, output, session) {
     
     output$roc <- renderPlot({
         x <- l()
-        
-        fg_rf <- x$raw[x$true==1]
-        bg_rf <- x$raw[x$true==0]
+        clases <- unique(x$true)
+        fg_rf <- x$raw[x$true==clases[2]]
+        bg_rf <- x$raw[x$true==clases[1]]
         roc_rf <- roc.curve(scores.class0 = fg_rf, scores.class1 = bg_rf, curve = T)
-        
+        if (roc_rf$auc < 0.5){
+            roc_rf <- roc.curve(scores.class0 = bg_rf, scores.class1 = fg_rf, curve = T)
+        }
         plot(roc_rf)
     })
     
     output$pr <- renderPlot({
         x <- l()
         
-        fg_rf <- x$raw[x$true==1]
-        bg_rf <- x$raw[x$true==0]
+        clases <- unique(x$true)
+        fg_rf <- x$raw[x$true==clases[2]]
+        bg_rf <- x$raw[x$true==clases[1]]
         pr_rf <- pr.curve(scores.class0 = fg_rf, scores.class1 = bg_rf, curve = T)
+        roc_rf <- roc.curve(scores.class0 = fg_rf, scores.class1 = bg_rf)
+        if (roc_rf$auc < 0.5){
+            pr_rf <- pr.curve(scores.class0 = bg_rf, scores.class1 = fg_rf, curve = T)
+        }
         plot(pr_rf)
     })
     
