@@ -39,24 +39,7 @@ Methods compared in subsequent stages are:
 
 ## Datasets
 
-TODO: ładniejszy format
-
-The fourteen data frames were taken from **OpenML100 collection** and were corrected specifically for this research. They can be found under the following identifiers with the following names:
-
-* 1590 - *adult*
-* 188 - *eucalyptus*
-* 23381 - *dresses-sales*
-* 29 - *credit-approval*
-* 38 - *sick*
-* 40536 - *SpeedDating*
-* 41278 - *okcupid-stem*
-* 56 - *vote*
-* 6332 - *cylinder-bands*
-* 1018 - *ipums_la_99-small*
-* 27 - *colic*
-* 4 - *labor*
-* 55 - *hepatitis*
-* 944 - *echoMonths*
+The fourteen data frames were taken from **OpenML100 collection** and were corrected specifically for this research. Both small and simple frames were chosen, as well as more complex and containing a lot of information, difficult to explain or present. They can be found under the following identifiers with the following names: 1590 - *adult*, 188 - *eucalyptus*, 23381 - *dresses-sales*, 29 - *credit-approval*, 38 - *sick*, 40536 - *SpeedDating*, 41278 - *okcupid-stem*, 56 - *vote*, 6332 - *cylinder-bands*, 1018 - *ipums_la_99-small*, 27 - *colic*, 4 - *labor*, 55 - *hepatitis* and 944 - *echoMonths*.
 
 Those above have been placed in individual directories identified by id in the prepared directory.
 
@@ -64,7 +47,13 @@ The six imputations mentioned earlier were released on all fourteen of them, but
 
 ## Binary classification algorithms
 
-TODO: pięć metod, ich krótki opis i również krótkie stwierdzenie, że sa fajne bo różne i wgl.
+In order to compare the quality of the imputed data and see how this supplementation of deficiencies works in practice, five binary classification algorithms have been selected. Her choice was made after careful analysis and extensive discussion, in order to find models that are both widely known and used, and also apply to different approaches and give reasonably distinguishable results using different techniques. The final choice fell on:
+
+* *classification tree from rpart^5^* - classic algorithm which uses a decision tree to go from observations about an item to conclusions about the item's target value,
+* *k-Nearest Neighbors from class^6^ package* - standard knn model attributing a given observationto a target corresponding to its closest observations in space,
+* *naive Bayes from e1071^7^* - well-known classification computing the conditional a-posterior probabilities of a categorical class variable given independent predictor variables using the Bayes rule.
+* *random forest from ranger^8^* - algorithm consisting of many decisions trees uses bagging and feature randomness when building each individual tree to try to create an uncorrelated forest of trees whose prediction by committee is more accurate than that of any individual tree.
+* *Support Vector Machine from e1071^7^* -  a discriminative classifier formally defined by a separating hyperplane.
 
 # Description of methodology and results
 
@@ -91,7 +80,7 @@ TODO: MCC jeszcze, czemu f1
 
 ## Imputation results
 
-The results of our work will be checked using the implemented classification tree algorithm from the *rpart ^5^* package. We have chosen this algorithm because this classifier works well for almost any type of data - and for the most part numerical, and for the most part factors, it can handle and make a decent model. The use of an algorithm using, for example, the distance from the nearest points or separating sets by clusters would not be recommended for each data frame, and given the diversity, here rpart should do a good job.
+The results of our work will be checked using the implemented classification tree algorithm from the *rpart* package. We have chosen this algorithm because this classifier works well for almost any type of data - and for the most part numerical, and for the most part factors, it can handle and make a decent model. The use of an algorithm using, for example, the distance from the nearest points or separating sets by clusters would not be recommended for each data frame, and given the diversity, here rpart should do a good job.
 
 Also, it is worth mentioning that removing rows computes a different dataset compared to other techniques. Because of that one needs to be cautious while analysing and comparing remove_rows to other imputation methods. For one's own research it is probably worth replacing removing rows with removing columns for datasets with few features containing missing values. 
 Here are the results. NA indicates that method returned error:
@@ -179,3 +168,9 @@ The experiment can be considered successful when it comes to the datasets and to
 *^4^missForest: Nonparametric Missing Value Imputation using Random Forest Daniel J. Stekhoven*
 
 *^5^rpart: Recursive Partitioning and Regression Trees, package by Terry Therneau, Beth Atkinson, Brian Ripley*
+
+*^6^class: Various functions for classification, including k-nearest neighbour, Learning Vector Quantization and Self-Organizing Maps, package created by Brian Ripley, William Venables*
+
+*^7^e1071: Misc Functions of the Department of Statistics, Probability Theory Group (Formerly: E1071), TU Wien, package created by David Meyer*
+
+*^8^ranger: A Fast Implementation of Random Forests, package created by Marvin N. Wright, Stefan Wager, Philipp Probst*
