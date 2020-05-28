@@ -21,7 +21,7 @@ df$model <- as.character(df$model)
 df$f1 <- as.numeric(df$f1)
 df$mcc <- as.numeric(df$mcc)
 
-rankings <- df %>% group_by(id, model) %>% mutate(r_f1 = rank(f1), r_mcc = rank(mcc))
+rankings <- df %>% group_by(id, model) %>% mutate(r_f1 = rank(-f1), r_mcc = rank(-mcc))
 
 melted <- reshape::melt(rankings[,c("imp", "r_f1", "r_mcc")] %>% as.data.frame)
 
@@ -43,7 +43,12 @@ library(tidyr)
 cmp <- df %>% 
   complete(id, imp, model)
 
-rankings <- cmp %>% group_by(id, model) %>% mutate(r_f1 = rank(f1), r_mcc = rank(mcc))
+cmp <- replace_na(cmp, list(f1 = c(0), mcc = c(-1)))
+
+#cmp$f1[is.na(cmp)] <- 0
+#cmp$mcc[is.na(cmp)] <- -1
+
+rankings <- cmp %>% group_by(id, model) %>% mutate(r_f1 = rank(-f1), r_mcc = rank(-mcc))
 melted <- reshape::melt(rankings[,c("imp", "r_f1", "r_mcc")] %>% as.data.frame)
 
 ggplot(melted, aes(x = imp, y = value, color = variable)) +
