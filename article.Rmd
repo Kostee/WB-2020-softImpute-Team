@@ -17,7 +17,7 @@ getwd()
 
 There are many different ways of dealing with missing values. Depending on their quantity and properties, various methods turn out to be the best. The fact is, there is no one universal best method of imputation, and different problems require various solutions. Using one and the same solution for each dataset is certainly not the best option, but sometimes it is convenient or even necessary to focus on one particular method without much insight into its effect - for example, when time limits us, or when with due to the complexity of the algorithm or class of problems, we are forced to choose only one method.
 
-In this article which we decided to name *The Hajada Imputation Test* (taken from the first two letters of creators' names) we'll take a look at several popular imputation methods and try to compare them with each other, including ranking of algorithms taken into account and finally choosing the best one. Obviously its result will not be the final verdict declaring which imputation algorithm is clearly better or worse, but considering the comparison of their quality on different datasets, we will be able to assess their collective performance and effectiveness against the backdrop of the whole. For this purpose, we'll test the modified collections for getting rid of empty values on several machine learning classification algorithms, and then considering the selected quality measures after comparing the results, we'll get the desired view. Due to the need to obtain a clear and interpretable result, we have limited ourselves to the problem of binary classification.
+In this chapter which we decided to name *The Hajada Imputation Test* (taken from the first two letters of creators' names) we'll take a look at several popular imputation methods and try to compare them with each other, including ranking of algorithms taken into account and finally choosing the best one. Obviously its result will not be the final verdict declaring which imputation algorithm is clearly better or worse, but considering the comparison of their quality on different datasets, we will be able to assess their collective performance and effectiveness against the backdrop of the whole. For this purpose, we'll test the modified collections for getting rid of empty values on several machine learning classification algorithms, and then considering the selected quality measures after comparing the results, we'll get the desired view. Due to the need to obtain a clear and interpretable result, we have limited ourselves to the problem of binary classification.
 
 # Introduction + motivation
 
@@ -75,7 +75,7 @@ In order to test the same test-train splits we used random seed 1357 for all dat
 
 ${\displaystyle {\text{MCC}}={\frac {{\mathit {TP}}\times {\mathit {TN}}-{\mathit {FP}}\times {\mathit {FN}}}{\sqrt {({\mathit {TP}}+{\mathit {FP}})({\mathit {TP}}+{\mathit {FN}})({\mathit {TN}}+{\mathit {FP}})({\mathit {TN}}+{\mathit {FN}})}}}}$
 
-These two gave good information about the quality of imputation and a good comparison. I resulted in simple and clear information about which observations are well classified, which ones are wrong and how they should be. Considering the number of sets to consider and their different properties, even when it comes to balancing, comparing these four measures, the fact that it will show the pros and cons of given imputations, will additionally be good to compare them.
+These two give good information about the quality of imputation and a good comparison. It resulted in simple and clear information about which observations are well classified, which ones are wrong and how they should be. Considering the number of sets to consider and their different properties, even when it comes to balancing, comparing these four measures, the fact that it will show the pros and cons of given imputations, will additionally be good to compare them.
 
 ## Comparing imputation times
 
@@ -83,76 +83,36 @@ A dataframe containing information about imputation methods was built.
 
 ![](files/imputationTimesScatter.png)
 
+
 Judging by the logarithmic scale, no surprise removing rows and median replenishment are definitely the fastest methods, with removing rows being several times faster. what would you expect, also "random rows" was quite fast, but slower than the two mentioned.Looking at more advanced ones, definitely *VIM* turned up to be the fastest - probably usually something like 5-10 times more than *mice* and *missForest*. These last two are quite slow, with the missforest appearing to be slightly faster.
 
 To better view a boxplot was also created.
 
 ![](files/imputationTimesBoxplot.png)
 
-Taking into account all the imputations which have been implemented, we can clearly see that two first mentioned ones really stand out. However, we cannot fully compare the other three - due to the fact that missForest failed on three data sets, and mice - up to seven.
+
+Taking into account all the imputations which have been implemented, it is clearly seen that two first mentioned ones really stand out. However, we cannot fully compare the other three - due to the fact that missForest failed on three data sets, and mice - up to seven.
 
 Considering such a large spread of data size, it is very interesting difference between the median and the average for VIM - the first is almost seven minutes, the second - barely one and a half seconds. In general, however, it is certainly much longer than methods for removing incomplete rows and filling with median.
 
-TO NIŻEJ SIĘ NIE PRZYDA CHYBA, ŚCIEK Z PD2
-Let's count these four measures again, but only for those datasets for which all imputations were successful - these are ids 27, 38, 55, 56, 944, 188  (dataset with id 4 softened on removing rows containing any missing items, because each of its poems had some missing items).
-
-Now we have better results to compare. Taking into account the mean time, definitely *missForest* is the slowest, but also its standard deviation is incomparably huge - this is probably due to the fact that for smaller sets it is doing well, but due to its complexity, its slowdown can be seen for very large datasets. As shown in the chart, *VIM* is definitely better for quick calculations than *missForest* and *mice*, and considering the median, *mice* is comparable to *missForest* - so you can expect that for small data sets there is not much difference between them, and a lot of time we definitely need to devote to these larger data frames.
-NOOO CHYBA MOŻNA WYRZUCIĆ
+Also was compared time for those datasets for which all imputations were successful - these are ids 27, 38, 55, 56, 944, 188  (dataset with id 4 softened on removing rows containing any missing items, because each of its poems had some missing items). Taking into account the mean time, definitely *missForest* was the slowest, but also its standard deviation seemed to be incomparably huge - this is probably due to the fact that for smaller sets it is doing well, but due to its complexity, its slowdown can be seen for very large datasets. *VIM* turned out bo be better for quick calculations than *missForest* and *mice*, and considering the median, *mice* is comparable to *missForest* - so for small data sets there is not much difference between them, and a lot of time was definitely needed to devote to these larger data frames.
 
 ## Best measures
 
-Let us draw attention to our measures. How did our four measures work on them?
+In order to compare *F1* and *MCC* measures, mean results of measures on all sets for all imputations were calculated. Then for each machine learning algorithm a ranking was created - so that the best result was obtained in the first, second - 2nd, etc. The results came out as shown by this boxplot:
 
-Attention! We will not consider sets with id 41278 and 188 in the next steps - they are non-binary classifications, so they are not affected by accuracy, precision, recall and f1. However, from the remaining twelve collections - we will be able to draw many valuable conclusions.
+![](files/rankingAll.png)
 
-Much data!!
 
-Naturally - we'll visualize it.
+It might seem that the results of the methods are very close to each other, but the above visualization takes into account all measures - to get the correct comparison there is a need to make a ranking only for the sets for which all imputations have passed. And it looks like the picture below.
 
-... where colors of points represent: <p style="color:orange">*1. **remove***</p>
-<p style="color:cyan">*2. **median***</p><p style="color:green">*3. **mice***</p>
-<p style="color:red">*4. **missForest***</p><p style="color:blue">*5. **VIM***</p>
+![](files/rankingGood.png)
 
-Looking only at these plots, it is difficult to come up with something at first glance - for each time I come to some conclusion, results for a few other datasets that I did not pay attention to deny it. For sure we can already say that the scatter of results is rather large and analyzing the measures of concentration, we probably will not clearly indicate the best or the worst imputation.
-
-Visualizations often help and ever give answers to the questions, but this time the best option will be definitely to calculate some measures. What means, medians and standard deviations give these measures?
-
-Looking at the table quickly, we can probably set our podium!! *MissForest* becomes the big winner just before ex aequo in second place: *mice* and *VIM*. At the bottom we have *median*, slightly overtaken by *remove_rows*? Well no! Remember that we should not take datasets for such comparison, for which we have only partial results. They probably strongly disturb the information about the data. The table above is not useless, because in the end we have means, medians and standard deviations of everything we could; but in order to be able to compare them without remorse, we should take only these five - which have complete information - we will calculate again the measures for datasets with ids 38, 56, 27, 55 and 944. This is necessary, because if not for the sets in which, naturally, regardless of the model or imputation we get very high or very low results generate a lot of chaos.
-
-So now we can make some conclusions!
-
-Having the table above, we can't say that *missForest* is definitely the best. Looking at the advanced ones, *missForest* and *VIM* are doing very well, almost always better than their competitors. *VIM* has slightly better accuracy and definitely better precision, while *missForest* dominates in the recall case and has slightly better f1. ***Mice* is almost always the worst**. Even *remove_rows* is doing better than it, and the *median* sometimes catches up with missForest and mice.
-
-Standard deviations are pretty balanced and it's hard to tell anything clever about it - especially considering the small number of collections. Rather, nothing stands out.
-
-Let's visualize dataset's model results measures.
-
-I think we will all agree now - in terms of results, at least looking at these six datasets for which each imputation was successful, we can create such a podium:
-
-1. *VIM* / *missForest* (judging by our need - for *accuracy* and *precision* - *VIM*, for *recall* - *missForest*)
-3. *median*
-4. *remove_rows*
-5. *mice*
-
-Of course, the results are not very representative, given the small number of datasets for which they were compared - but still something.
-
-## Imputation time and its results
-
-We collected and summarized both results and imputation times in our collections. What are the average imputation times and the measures' medians of our imputations?
-
-Looking at the results, *VIM* and *missForest* give quite similar numbers in terms of satisfaction, but VIM is much faster - for data sets for which each imputation has passed, it managed in six times shorter period of time than *missForest* (and also of course much worse *mice*). The question is how much we are interested in time - it turns out that for very large data sets our model will not suffer much if we take the median instead of these two. At this point, you can probably make a correction of the ranking:
-
-1. *VIM*
-2. *median* / *missForest* (depending on how important time is for us)
-...
-4. *remove_rows*
-...
-5. *mice*
+Considering the imputation times and results, it can be said that the knn algorithm from the VIM package proved to be "universally" the best. With the original methods it falls out the fastest, and the results also have the best. However, it is more difficult to choose second and subsequent places - looking at the results, the methods are very quick, but they differ from the more advanced ones. Looking at the advanced ones, with the exception of VIM, MissForest stands out. However, his problem is time. So after VIM, it seems second best to use mean / median for a small amount of time and missForest for a large one. However, there was no huge difference in results between the methods - which, however, is not visible in the charts, "removeRows" is characterized by large fluctuations, which we advise against.
 
 # Conclusion
 
-The experiment can be considered successful when it comes to the datasets and tools made available to us - calculated measures, visualizations made, as well as conclusions led us, among others, to the intuition that probably *VIM* is really a very good package, supplementing the missing values with medians from columns is not at all is such a stupid idea as it may seem, and *mice* can be thrown in the bin. Unfortunately, it is impossible to draw a wise conclusion based on such a small number of tested data - admittedly as many as 14 sets, problems with imputations on some of them or too small dataframes not giving a satisfactory answer and assumptions that respectful statistics would praise. Nevertheless, above code is certainly very valuable and for more data sets it could confirm one or another belief - therefore we can probably say that we have achieved scientific success!
-
+The experiment can be considered successful when it comes to the datasets and tools made available to us - calculated measures, visualizations made, as well as conclusions led us, among others, to the intuition that probably *VIM* is really a very good package, supplementing the missing values with medians from columns is not at all is such a stupid idea as it may seem and *missForest* is also noteworthy - if we have time for running it and the dataset isn't too huge. Unfortunately, it is impossible to draw a wise conclusion based on such a small number of tested data - admittedly as many as 14 sets, problems with imputations on some of them or too small dataframes not giving a satisfactory answer and assumptions that respectful statistics would praise. Nevertheless, above code is certainly very valuable and for more data sets it could confirm one or another belief.
 ## References
 
 *^1^mice: Multivariate Imputation by Chained Equations, package created by Stef van Buuren, Karin Groothuis-Oudshoorn, Gerko Vink, Rianne Schouten, Alexander Robitzsch, Lisa Doove, Shahab Jolani, Margarita Moreno-Betancur, Ian White, Philipp Gaffert, Florian Meinfelder, Bernie Gray*
@@ -160,7 +120,6 @@ The experiment can be considered successful when it comes to the datasets and to
 *^2^Fully conditional specification: Imputes multivariate missing data on a variable-by-variable basis (Van Buuren et al. 2006; Van Buuren 2007a).*
 
 *^3^VIM: Visualization and Imputation of Missing Values, package created by Matthias Templ, Alexander Kowarik, Andreas Alfons, Bernd Prantner*
-
 *^4^missForest: Nonparametric Missing Value Imputation using Random Forest Daniel J. Stekhoven*
 
 *^5^rpart: Recursive Partitioning and Regression Trees, package by Terry Therneau, Beth Atkinson, Brian Ripley*
