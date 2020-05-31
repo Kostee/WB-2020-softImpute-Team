@@ -112,7 +112,7 @@ Considering the imputation times and results, it can be said that the knn algori
 
 # Conclusion
 
-The experiment can be considered successful when it comes to the datasets and tools made available to us - calculated measures, visualizations made, as well as conclusions led us, among others, to the intuition that probably *VIM* is really a resplendent package, supplementing the missing values with medians from columns is not is such an unwise idea as it may seem and *missForest* is also noteworthy - if one have time for running it and the dataset isn't too sizeable. Unfortunately, it is impossible to draw an objective conclusion based on such a small number of tested data - with as few as 14 sets, problems with imputations on some of them or too small dataframes not giving a satisfactory answer. Nevertheless, the code is certainly very valuable and for more datasets it could confirm one or another belief.
+The experiment can be considered successful when it comes to the datasets and tools made available to us - calculated measures, visualizations made, as well as conclusions led us, among others, to the intuition that probably *VIM* is really a resplendent package, supplementing the missing values with medians from columns is not is such an unwise idea as it may seem and *missForest* is also noteworthy - if one has time for running it and the dataset isn't too sizeable. Unfortunately, it is impossible to draw an objective conclusion based on such a small number of tested data - with as few as 14 sets, problems with imputations on some of them or too small dataframes not giving a satisfactory answer. Nevertheless, the code is certainly very valuable and for more datasets it could confirm one or another belief.
 
 ## References
 
