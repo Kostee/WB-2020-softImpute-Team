@@ -1,17 +1,6 @@
----
-title: "The Hajada Imputation Test"
-author: "Jakub Kosterna, Dawid Przybyliński, Hanna Zdulska"
-date: "May 2020"
-output:
-  html_document:
-    code_folding: hide
-  pdf_document: default
----
+## The Hajada Imputation Test
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
-getwd()
-```
+*Authors: Jakub Kosterna, Dawid Przybyliński, Hanna Zdulska (Warsaw University of Technology)*
 
 ### Abstract
 
@@ -136,3 +125,5 @@ The experiment can be considered successful when it comes to the datasets and to
 *^11^parallel: Support for parallel computation, including by forking (taken from package multicore), by sockets (taken from package snow) and random-number generation*
 
 *^12^Matthews correlation coefficient: a measure of the quality of binary (two-class) classifications, introduced by biochemist Brian W. Matthews in 1975*
+
+*^11^Matthews correlation coefficient: a measure of the quality of binary (two-class) classifications, introduced by biochemist Brian W. Matthews in 1975*
