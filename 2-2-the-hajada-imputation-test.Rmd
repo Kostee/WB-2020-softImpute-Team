@@ -8,7 +8,7 @@ There are many different ways of dealing with missing values. Depending on their
 
 ### Introduction and Motivation
 
-In statistics, imputation is the process of replacing missing data with substituted values. Over the years, humanity has created many different methods accomplishing that, including the simple and instinctive ones but also more advanced and hard to be easily explained. Choosing the best-suited imputation method for the dataset with missing values is still the daily dilemma of every data scientist and there isn't one universally recognized best technique. Some scientists believe the crux lies in the most advanced and sophisticated algorithms, others trust the simplest of all possible. In a way, both sides are right - the first naturally win in speed of execution, but the second ones do not have advanced operations implemented for nothing and this usually results in data that more accurately reflects reality or what might be expected from it. How do the individual popular ways fall on the famous collections from OpenML100^1^? 
+In statistics, imputation is the process of replacing missing data with substituted values. Over the years, humanity has created many different methods accomplishing that, including the simple and instinctive ones but also more advanced and hard to be easily explained. Choosing the best-suited imputation method for the dataset with missing values is still the daily dilemma of every data scientist and there isn't one universally recognized best technique. Some scientists believe the crux lies in the most advanced and sophisticated algorithms, others trust the simplest of all possible. In a way, both sides are right - the first naturally win in speed of execution, but the second ones do not have advanced operations implemented for nothing and this usually results in data that more accurately reflects reality or what might be expected from it. How do the individual popular ways fall on the famous collections from OpenML100? 
 In this test, which we decided to name *The Hajada Imputation Test* (taken from the first two letters of creators' names), we will find the answer to this question, by delving into how well classification on imputed datasets can perform and when predictions are the best, rank algorithms taken into account and finally choosing the best one. Obviously its result will not be the final verdict declaring which imputation algorithm is clearly better or worse, but considering the comparison of their quality on different datasets, we will be able to assess their collective performance and effectiveness against the backdrop of the whole.
 
 #### Imputation functions
@@ -22,15 +22,15 @@ Methods compared in subsequent stages are:
 1. *mode / median replace* - basic process which puts in a place of missing data median cells from their columns for numerical values and dominants for categorical ones.
 2. *remove rows* - trivial solution of removing rows containing any missing data.
 3. *'bogo' random replace* - simple algorithm replacing each NA value with a random entry from its feature. (chosen independently for every missing value)
-4. *mice* ^2^ - advanced method creating multiple imputations for multivariate missing data, based on *Fully Conditional Specification* ^3^, where each incomplete variable is imputed by a separate model. Standard imputation with *maxit* parameter of value 0 and default 5 number of imputed datasets.
-5. *VIM* ^4^ - standard k-nearest neighbors algorithm taken from the library.
-6. *missForest* ^5^ - imputation based on random forest offered by the package.
+4. *mice* [@2-2-mice] - advanced method creating multiple imputations for multivariate missing data, based on *Fully Conditional Specification*, where each incomplete variable is imputed by a separate model. Standard imputation with *maxit* parameter of value 0 and default 5 number of imputed datasets.
+5. *VIM* [@2-2-VIM] - standard k-nearest neighbors algorithm taken from the library.
+6. *missForest* [@2-2-missForest] - imputation based on random forest offered by the package.
 
 ### Methodology
 
 #### Datasets
 
-The fourteen data frames were taken from OpenML100 collection ^1^ and were corrected specifically for this research. Both small and simple frames were chosen as well as more complex and containing a lot of information, difficult to explain or present. They can be found under the following identifiers with the following names and statistics:
+The fourteen data frames were taken from OpenML100 collection and were corrected specifically for this research. Both small and simple frames were chosen as well as more complex and containing a lot of information, difficult to explain or present. They can be found under the following identifiers with the following names and statistics:
 
 |Id     |Name             |   No. rows|  No. columns| No. missings|
 |:------|----------------:|----------:|------------:|------------:|
@@ -55,15 +55,15 @@ These above have been placed in individual directories identified by id in the p
 
 In order to compare the quality of the imputed data and see how this supplementation of deficiencies works in practice, five binary classification algorithms have been selected. Their choice was made after careful analysis and extensive discussion, in order to find models that are both widely known and used, but also apply to different approaches and give reasonably distinguishable results using different techniques. The final choice fell on:
 
-* *classification tree from rpart^6^* - classic algorithm which uses a decision tree to go from observations about an item to conclusions about the item's target value,
-* *k-Nearest Neighbors^7^ from class^8^ package* - standard knn^7^ model attributing a given observation to a target corresponding to its closest observations in space,
-* *naive Bayes from e1071^9^* - well-known classification computing the conditional a-posterior probabilities of a categorical class variable given independent predictor variables using the Bayes rule.
-* *random forest from ranger^10^* - algorithm consisting of many decisions trees uses bagging and feature randomness when building each individual tree trying to create an uncorrelated forest of trees whose prediction by committee is more accurate than that of any individual tree.
-* *Support Vector Machine from e1071^9^* -  a discriminative classifier formally defined by a separating hyperplane.
+* *classification tree from rpart* [@2-2-rpart] - classic algorithm which uses a decision tree to go from observations about an item to conclusions about the item's target value,
+* *k-Nearest Neighbors from class package* [@2-2-class] - standard knn model attributing a given observation to a target corresponding to its closest observations in space,
+* *naive Bayes from e1071* [@2-2-e1071] - well-known classification computing the conditional a-posterior probabilities of a categorical class variable given independent predictor variables using the Bayes rule.
+* *random forest from ranger* [@2-2-ranger] - algorithm consisting of many decisions trees uses bagging and feature randomness when building each individual tree trying to create an uncorrelated forest of trees whose prediction by committee is more accurate than that of any individual tree.
+* *Support Vector Machine from e1071* [@2-2-e1071] - a discriminative classifier formally defined by a separating hyperplane.
 
 #### Work automation
 
-In order to automise our code we developed it in such a way so that it is possible to easily conduct further experiments with entirely new datasets, imputation methods and classification models. Plenty of time neccesary for imputation was saved using parallel processing^11^.
+In order to automise our code we developed it in such a way so that it is possible to easily conduct further experiments with entirely new datasets, imputation methods and classification models. Plenty of time neccesary for imputation was saved using parallel processing.
 
 #### Metrics functions
 
@@ -74,7 +74,7 @@ In order to test the same test-train splits we used random seed 1357 for all dat
 * *recall* - $\frac{TP}{TP+FN}$
 * *f1* - $2*\frac{Recall * Precision}{Recall + Precision}$
 
-For the final conclusion, ranking concerned only the last one. Additionally, Matthews correlation coefficient^12^ measures were also computed.
+For the final conclusion, ranking concerned only the last one. Additionally, Matthews correlation coefficient measures were also computed.
 
 ${\displaystyle {\text{MCC}}={\frac {{\mathit {TP}}\times {\mathit {TN}}-{\mathit {FP}}\times {\mathit {FN}}}{\sqrt {({\mathit {TP}}+{\mathit {FP}})({\mathit {TP}}+{\mathit {FN}})({\mathit {TN}}+{\mathit {FP}})({\mathit {TN}}+{\mathit {FN}})}}}}$
 
@@ -110,34 +110,8 @@ It might seem that the results of the methods are very close to each other, but 
 
 ![](2-2-files/rankingAll.png)
 
-Considering the imputation times and results, it can be said that the knn^7^ algorithm from the VIM package proved to be "universally" the best. Out of the advanced methods it falls out the fastest, and its results are also the best. However, it is more difficult to choose second and subsequent places - looking at the results, the simple methods are very quick, but they differ from the more advanced ones. Looking at the advanced ones, with the exception of VIM, MissForest stands out. However, his problem is time. So after VIM, it seems second best to use mean / median replenishment for a small amount of time and missForest for a large one. However, although mode / medain usually obtained worse ranks, there was no extensive difference in results between the methods - which is not visible in the charts. "removeRows" is characterized by large fluctuations, and therefore we advise against using it.
+Considering the imputation times and results, it can be said that the k-nearest neighbors algorithm from the VIM package proved to be "universally" the best. Out of the advanced methods it falls out the fastest, and its results are also the best. However, it is more difficult to choose second and subsequent places - looking at the results, the simple methods are very quick, but they differ from the more advanced ones. Looking at the advanced ones, with the exception of VIM, MissForest stands out. However, his problem is time. So after VIM, it seems second best to use mean / median replenishment for a small amount of time and missForest for a large one. However, although mode / medain usually obtained worse ranks, there was no extensive difference in results between the methods - which is not visible in the charts. "removeRows" is characterized by large fluctuations, and therefore we advise against using it.
 
 #### Summary and conclusions
 
 The experiment can be considered successful when it comes to the datasets and tools made available to us - calculated measures, visualizations made, as well as conclusions led us, among others, to the intuition that probably *VIM* is really a resplendent package, supplementing the missing values with medians from columns is not is such an unwise idea as it may seem and *missForest* is also noteworthy - if one has time for running it and the dataset isn't too sizeable. Unfortunately, it is impossible to draw an objective conclusion based on such a small number of tested data - with as few as 14 sets, problems with imputations on some of them or too small dataframes not giving a satisfactory answer. Nevertheless, the code is certainly very valuable and for more datasets it could confirm one or another belief.
-
-#### References
-
-*^1^OpenML100: a predecessor of the OpenML-CC18, a suite of 100 classification datasets from OpenML which were carefully selected to be usable by many algorithms and also represent datasets commonly used in machine learning research*
-
-*^2^mice: Multivariate Imputation by Chained Equations, package created by Stef van Buuren, Karin Groothuis-Oudshoorn, Gerko Vink, Rianne Schouten, Alexander Robitzsch, Lisa Doove, Shahab Jolani, Margarita Moreno-Betancur, Ian White, Philipp Gaffert, Florian Meinfelder, Bernie Gray*
-
-*^3^Fully conditional specification: Imputes multivariate missing data on a variable-by-variable basis (Van Buuren et al. 2006; Van Buuren 2007a).*
-
-*^4^VIM: Visualization and Imputation of Missing Values, package created by Matthias Templ, Alexander Kowarik, Andreas Alfons, Bernd Prantner*
-
-*^5^missForest: Nonparametric Missing Value Imputation using Random Forest Daniel J. Stekhoven*
-
-*^6^rpart: Recursive Partitioning and Regression Trees, package by Terry Therneau, Beth Atkinson, Brian Ripley*
-
-*^7^k-nearest neighbors algorithm: a non-parametric method with the input consisting of the k closest training examples in the feature space.*
-
-*^8^class: Various functions for classification, including k-nearest neighbour, Learning Vector Quantization and Self-Organizing Maps, package created by Brian Ripley, William Venables*
-
-*^9^e1071: Misc Functions of the Department of Statistics, Probability Theory Group (Formerly: E1071), TU Wien, package created by David Meyer*
-
-*^10^ranger: A Fast Implementation of Random Forests, package created by Marvin N. Wright, Stefan Wager, Philipp Probst*
-
-*^11^parallel: Support for parallel computation, including by forking (taken from package multicore), by sockets (taken from package snow) and random-number generation*
-
-*^12^Matthews correlation coefficient: a measure of the quality of binary (two-class) classifications, introduced by biochemist Brian W. Matthews in 1975*
